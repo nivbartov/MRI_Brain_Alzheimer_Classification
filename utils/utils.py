@@ -33,6 +33,8 @@ def train(model, num_epochs, trainloader, device, criterion, optimizer):
         epoch_time = time.time() - epoch_time
         log += "Epoch Time: {:.2f} secs".format(epoch_time)
         print(log)
+    
+    return epoch_losses
 
 def plot_loss_curve(epoch_losses, num_epochs):
     _, ax = plt.subplots(figsize=(5, 5))
