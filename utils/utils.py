@@ -8,6 +8,8 @@ from torch.utils.data import TensorDataset, DataLoader, Subset, ConcatDataset
 import torchvision
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
+from kornia import augmentation as K
+from kornia.augmentation import AugmentationSequential
 import matplotlib.pyplot as plt
 import random
 import time
@@ -41,6 +43,44 @@ def train(model, num_epochs, trainloader, device, criterion, optimizer):
             inputs, labels = data
             # send them to device
             inputs = inputs.to(device)
+            labels = labels.to(device)
+
+            # forward + backward + optimize
+            outputs = model(inputs) # forward pass
+            loss = criterion(outputs, labels) # calculate the loss
+            optimizer.zero_grad() # zero the parameter gradients
+            loss.backward() # backpropagation
+            optimizer.step() # update parameters
+
+            # print statistics
+            running_loss += loss.data.item()
+
+        # Normalizing the loss by the total number of train batches
+        running_loss /= len(trainloader)
+        epoch_losses.append(running_loss)
+
+        # Calculate training set accuracy of the existing model
+        train_accuracy = calculate_accuracy(model, trainloader, device)
+
+        log = "Epoch: {} | Loss: {:.4f} | Training accuracy: {:.3f}% | ".format(epoch, running_loss, train_accuracy)
+        epoch_time = time.time() - epoch_time
+        log += "Epoch Time: {:.2f} secs".format(epoch_time)
+        print(log)
+    
+    return epoch_losses
+
+def train_kornia(model, num_epochs, trainloader, device, criterion, optimizer, kornia_aug):
+    epoch_losses = []
+
+    for epoch in range(1, num_epochs + 1):
+        model.train()
+        running_loss = 0.0
+        epoch_time = time.time()
+        for i, data in enumerate(trainloader, 0):
+            # get the inputs
+            inputs, labels = data
+            # send them to device
+            inputs = kornia_aug(inputs).to(device)
             labels = labels.to(device)
 
             # forward + backward + optimize
