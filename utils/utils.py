@@ -63,7 +63,7 @@ def train(model, num_epochs, trainloader, device, criterion, optimizer):
         # Calculate training set accuracy of the existing model
         train_accuracy, _ = calculate_accuracy(model, trainloader, device)
 
-        log = "Epoch: {} | Loss: {:.4f} | Training accuracy: {:.3f}% | ".format(epoch, epoch_loss, train_accuracy)
+        log = "Epoch: {} | Loss: {:.4f} | Training accuracy: {:.3f}% | ".format(epoch, running_loss, train_accuracy)
         epoch_time = time.time() - epoch_time
         log += "Epoch Time: {:.2f} secs".format(epoch_time)
         print(log)
