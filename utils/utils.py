@@ -9,7 +9,6 @@ import torchvision
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
-%matplotlib inline
 import random
 import time
 
