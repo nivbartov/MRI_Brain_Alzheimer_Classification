@@ -12,6 +12,26 @@ import matplotlib.pyplot as plt
 import random
 import time
 
+def calculate_accuracy(model, dataloader, device):
+    model.eval()
+    total_correct = 0
+    total_images = 0
+    confusion_matrix = np.zeros([10, 10], int)
+    with torch.no_grad():
+        for data in dataloader:
+            images, labels = data
+            images = images.to(device)
+            labels = labels.to(device)
+            outputs = model(images)
+            _, predicted = torch.max(outputs.data, 1)
+            total_images += labels.size(0)
+            total_correct += (predicted == labels).sum().item()
+            for i, l in enumerate(labels):
+                confusion_matrix[l.item(), predicted[i].item()] += 1
+
+    model_accuracy = total_correct / total_images * 100
+    return model_accuracy, confusion_matrix
+
 def train(model, num_epochs, trainloader, device, criterion, optimizer):
     epoch_losses = []
 
@@ -41,7 +61,7 @@ def train(model, num_epochs, trainloader, device, criterion, optimizer):
         epoch_losses.append(running_loss)
 
         # Calculate training set accuracy of the existing model
-        train_accuracy, _ = utils.calculate_accuracy(model, trainloader, device)
+        train_accuracy, _ = calculate_accuracy(model, trainloader, device)
 
         log = "Epoch: {} | Loss: {:.4f} | Training accuracy: {:.3f}% | ".format(epoch, epoch_loss, train_accuracy)
         epoch_time = time.time() - epoch_time
@@ -57,23 +77,3 @@ def plot_loss_curve(epoch_losses, num_epochs):
     ax.set_xlabel('Epochs')
     ax.set_ylabel('Loss')
     ax.grid(True)
-
-def calculate_accuracy(model, dataloader, device):
-    model.eval()
-    total_correct = 0
-    total_images = 0
-    confusion_matrix = np.zeros([10, 10], int)
-    with torch.no_grad():
-        for data in dataloader:
-            images, labels = data
-            images = images.to(device)
-            labels = labels.to(device)
-            outputs = model(images)
-            _, predicted = torch.max(outputs.data, 1)
-            total_images += labels.size(0)
-            total_correct += (predicted == labels).sum().item()
-            for i, l in enumerate(labels):
-                confusion_matrix[l.item(), predicted[i].item()] += 1
-
-    model_accuracy = total_correct / total_images * 100
-    return model_accuracy, confusion_matrix
