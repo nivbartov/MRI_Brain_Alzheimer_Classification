@@ -2,6 +2,7 @@ import sys
 import os
 import torch
 import torch.nn as nn
+import copy
 
 class NaiveModelAug(nn.Module):
     def __init__(self, input_channels=3, output_channels=4):
@@ -50,6 +51,47 @@ class NaiveModelAug(nn.Module):
         x = x.view(x.size(0), -1)
         x = self.fc_layer(x)
         return x
+    
+    
+class DINO_v2_FT(nn.Module):
+    def __init__(self, dino_backbone, output_channels):
+        super(DINO_v2_FT, self).__init__()
+        
+        self.dino_backbone = copy.deepcopy(dino_backbone)
+        
+        in_features = 384 # Retrieve in_features from the original head
+        
+        self.fc = nn.Sequential(
+            nn.Linear(in_features, 512), 
+            nn.BatchNorm1d(512),
+            nn.GELU(),  
+            nn.Dropout(0.1),  
+            
+            nn.Linear(512, 256),
+            nn.BatchNorm1d(256),
+            nn.GELU(),
+            nn.Dropout(0.1),
+            
+            nn.Linear(256, 128),
+            nn.BatchNorm1d(128),
+            nn.GELU(),
+            nn.Dropout(0.1),
+            
+            nn.Linear(128, 64),
+            nn.BatchNorm1d(64),
+            nn.GELU(),
+            nn.Dropout(0.1),
+            
+            nn.Linear(64, output_channels) 
+        )
+        
+    def forward(self, x):
+    
+        x = self.dino_backbone(x)
+        x = x.view(x.size(0), -1)
+        x = self.fc(x)
+        return x
+    
     
     
     

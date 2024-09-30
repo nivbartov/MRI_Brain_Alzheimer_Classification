@@ -1,0 +1,38 @@
+name: project_env
+channels:
+  - pytorch
+  - nvidia
+  - anaconda
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - matplotlib
+  - notebook
+  - numpy
+  - opencv
+  - pandas
+  - pip
+  - plotly
+  - scikit-learn
+  - scipy
+  - seaborn
+  - tqdm
+  - jupyter 
+  - ipywidgets
+  - pytorch 
+  - torchvision 
+  - pip:
+      - optuna
+      - omegaconf
+      - torchmetrics
+      - fvcore
+      - iopath
+      - submitit
+      - kornia
+      - cuml-cu11
+      - pickleshare
+      - "xformers"  # Installing xformers from the CUDA 12.4 index
+    # PIP options for additional PyTorch and NVIDIA dependencies
+      - --extra-index-url https://download.pytorch.org/whl/cu124
+      - --extra-index-url https://pypi.nvidia.com
