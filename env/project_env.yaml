@@ -31,7 +31,9 @@ dependencies:
       - submitit
       - kornia
       - cuml-cu11
+      - prettytable
       - pickleshare
+      - torchattacks # recommended PyTorch version >=1.4.0 , Python version >=3.6
       - "xformers"  # Installing xformers from the CUDA 12.4 index
     # PIP options for additional PyTorch and NVIDIA dependencies
       - --extra-index-url https://download.pytorch.org/whl/cu124

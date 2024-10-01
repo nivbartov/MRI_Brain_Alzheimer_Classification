@@ -183,7 +183,7 @@ def optuna_param_search(model_name, loss_criterion, num_epochs_for_experiments=1
     # make the study
     sampler = optuna.samplers.TPESampler()
     study = optuna.create_study(study_name="mri-alzhimer-classification", direction="maximize", sampler=sampler)
-    study.optimize(objective_with_args, n_trials=30)
+    study.optimize(objective_with_args, n_trials=40)
 
     # get the purned and completed trials
     pruned_trials = [t for t in study.trials if t.state == optuna.trial.TrialState.PRUNED]

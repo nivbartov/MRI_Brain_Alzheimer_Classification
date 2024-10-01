@@ -62,27 +62,27 @@ class DINO_v2_FT(nn.Module):
         in_features = 384 # Retrieve in_features from the original head
         
         self.fc = nn.Sequential(
-            nn.Linear(in_features, 512), 
-            nn.BatchNorm1d(512),
+            nn.Linear(in_features, 2048), 
+            nn.BatchNorm1d(2048),
             nn.GELU(),  
             nn.Dropout(0.1),  
             
-            nn.Linear(512, 256),
-            nn.BatchNorm1d(256),
+            nn.Linear(2048, 2048),
+            nn.BatchNorm1d(2048),
             nn.GELU(),
             nn.Dropout(0.1),
             
-            nn.Linear(256, 128),
-            nn.BatchNorm1d(128),
+            nn.Linear(2048, 2048),
+            nn.BatchNorm1d(2048),
             nn.GELU(),
             nn.Dropout(0.1),
             
-            nn.Linear(128, 64),
-            nn.BatchNorm1d(64),
+            nn.Linear(2048, 1000),
+            nn.BatchNorm1d(1000),
             nn.GELU(),
             nn.Dropout(0.1),
             
-            nn.Linear(64, output_channels) 
+            nn.Linear(1000, output_channels) 
         )
         
     def forward(self, x):
