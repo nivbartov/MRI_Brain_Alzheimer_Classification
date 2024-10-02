@@ -11,6 +11,7 @@ import torchvision.datasets as datasets
 import torchvision.transforms as transforms
 from kornia import augmentation as K
 from kornia.augmentation import AugmentationSequential
+from torch.optim.lr_scheduler import CosineAnnealingLR, StepLR
 import matplotlib.pyplot as plt
 import random
 import time
@@ -19,6 +20,29 @@ from sklearn.manifold import TSNE
 from sklearn.metrics import confusion_matrix,ConfusionMatrixDisplay
 from prettytable import PrettyTable
 import torchattacks
+
+
+
+
+def save_model(model, optimizer, epoch, running_loss, model_name):
+    """Save the model checkpoint."""
+    print('==> Saving model ...')
+    state = {
+        'net': model.state_dict(),
+        'optimizer': optimizer.state_dict(),
+        'epoch': epoch,                      
+        'loss': running_loss                   
+    }
+    
+    current_time = datetime.now().strftime("%H%M%S_%d%m%Y")  # Format: HHMMSS_DDMMYYYY
+    filename = f'./checkpoints/{model_name}_{current_time}.pth'
+    
+    if not os.path.isdir('checkpoints'):
+        os.mkdir('checkpoints')
+        
+    torch.save(state, filename)
+    print(f'saved as {filename}')
+
 
 def calculate_accuracy(model, dataloader, device):
     model.eval()
@@ -37,7 +61,8 @@ def calculate_accuracy(model, dataloader, device):
     model_accuracy = total_correct / total_images * 100
     return model_accuracy
 
-def train(model, num_epochs, trainloader, device, criterion, optimizer, kornia_aug=None):
+
+def train(model, num_epochs, trainloader, device, criterion, optimizer, scheduler, kornia_aug=None):
     epoch_losses = []
     
     model_name = type(model).__name__
@@ -51,10 +76,11 @@ def train(model, num_epochs, trainloader, device, criterion, optimizer, kornia_a
             # get the inputs
             inputs, labels = data
             # send them to device
-            if kornia_aug == None:
+            if kornia_aug is None:
                 inputs = inputs.to(device)
             else:
                 inputs = kornia_aug(inputs).to(device)
+            
             labels = labels.to(device)
 
             # forward + backward + optimize
@@ -79,26 +105,15 @@ def train(model, num_epochs, trainloader, device, criterion, optimizer, kornia_a
         log += "Epoch Time: {:.2f} secs".format(epoch_time)
         print(log)
         
-        # save model
+        # save model every 5 epochs
         if epoch % 5 == 0:
-            print('==> Saving model ...')
-            state = {
-                'net': model.state_dict(),
-                'optimizer': optimizer.state_dict(),
-                'epoch': epoch,                      
-                'loss': running_loss                   
-            }
-            
-            current_time = datetime.now().strftime("%H%M%S_%d%m%Y")  # Format: HHMMSS_DDMMYYYY
-            filename = f'./checkpoints/{model_name}_{current_time}.pth'
-            
-            if not os.path.isdir('checkpoints'):
-                os.mkdir('checkpoints')
-                
-            torch.save(state, filename)
-            print(f'saved as {filename}')
-    
+            save_model(model, optimizer, epoch, running_loss, model_name)
+        
+        # Call scheduler step after each epoch
+        scheduler.step()    
+
     return epoch_losses
+
 
 def open_nvidia_smi():
     try:

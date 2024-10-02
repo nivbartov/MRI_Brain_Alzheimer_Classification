@@ -8,6 +8,9 @@ import optuna
 from torch import optim
 import torchvision.transforms as transforms
 import json
+from kornia.augmentation import AugmentationSequential
+from kornia import augmentation as K
+from torch.optim.lr_scheduler import CosineAnnealingLR, StepLR
 
 from models import def_models
 from utils import utils_funcs
@@ -60,9 +63,7 @@ def define_model(trial, model_name, transfer_learning):
         model = model_class(input_channels=3, output_channels=output_channels)
 
     return model
-    
 
-    
 
 def objective(trial,model_name, epochs, device , loss_criterion, transfer_learning=True):
 
@@ -77,6 +78,9 @@ def objective(trial,model_name, epochs, device , loss_criterion, transfer_learni
     optimizer = getattr(optim, optimizer_name)(model.parameters(), lr=lr)
     # batch size
     batch_size = trial.suggest_categorical('batch_size', [32,64,128,256])
+    # scheduler
+    scheduler_name = trial.suggest_categorical('scheduler', ["StepLR", "CosineAnnealingLR"])
+    scheduler = StepLR(optimizer, 10, 0.1) if scheduler_name == "StepLR" else CosineAnnealingLR(optimizer, 30)
     
 
     # Get MRI dataset - load the data and shuffle it
@@ -102,6 +106,19 @@ def objective(trial,model_name, epochs, device , loss_criterion, transfer_learni
     n_train_examples = 50 * batch_size
     n_valid_examples = 15 * batch_size
     
+    
+    augmentations = K.AugmentationSequential(
+        K.RandomHorizontalFlip(p=0.1),
+        K.RandomVerticalFlip(p=0.1),
+        K.RandomRotation(degrees=10, p=0.1),
+        K.RandomAffine(degrees=5, translate=(0.05, 0.05), scale=(0.95, 1.05), p=0.1),
+        K.RandomBrightness(brightness=(0.8, 1.2), p=0.1),
+        K.RandomContrast(contrast=(0.8, 1.2), p=0.1),
+        K.RandomGamma(gamma=(0.9, 1.1), p=0.1),
+        K.RandomSharpness(p=0.1),
+        same_on_batch=False
+    )
+    
     # Training of the model
     for epoch in tqdm(range(epochs), total=epochs):
         model.train()
@@ -111,7 +128,7 @@ def objective(trial,model_name, epochs, device , loss_criterion, transfer_learni
             if batch_idx * batch_size >= n_train_examples:
                 break
             
-            inputs = inputs.to(device)
+            inputs = augmentations(inputs).to(device)
             labels = labels.to(device)
 
             output_vals = model.forward(inputs)
@@ -142,7 +159,8 @@ def objective(trial,model_name, epochs, device , loss_criterion, transfer_learni
         accuracy = correct / min(len(validloader.dataset), n_valid_examples)
 
         # report back to Optuna how far it is (epoch-wise) into the trial and how well it is doing (accuracy)
-        trial.report(accuracy, epoch)  
+        trial.report(accuracy, epoch)
+        scheduler.step() 
 
         # then, Optuna can decide if the trial should be pruned
         # Handle pruning based on the intermediate value.
