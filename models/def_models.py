@@ -58,13 +58,13 @@ class DINO_v2_FT(nn.Module):
         super(DINO_v2_FT, self).__init__()
         
         self.dino_backbone = copy.deepcopy(dino_backbone)
-        
+
         in_features = 384 # Retrieve in_features from the original head
         
         self.fc = nn.Sequential(
             nn.Linear(in_features, 2048), 
             nn.BatchNorm1d(2048),
-            nn.GELU(),  
+            nn.GELU(),
             nn.Dropout(0.1),  
             
             nn.Linear(2048, 2048),

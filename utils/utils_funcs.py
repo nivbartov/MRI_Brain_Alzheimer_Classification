@@ -20,6 +20,8 @@ from sklearn.manifold import TSNE
 from sklearn.metrics import confusion_matrix,ConfusionMatrixDisplay
 from prettytable import PrettyTable
 import torchattacks
+from torch.cuda.amp import autocast, GradScaler
+from tqdm import tqdm
 
 
 
@@ -62,36 +64,57 @@ def calculate_accuracy(model, dataloader, device):
     return model_accuracy
 
 
-def train(model, num_epochs, trainloader, device, criterion, optimizer, scheduler, kornia_aug=None):
+def log_epoch(epoch, running_loss, train_accuracy, epoch_time):
+    """Logs the statistics for the current epoch."""
+    log = "Epoch: {} | Loss: {:.4f} | Training accuracy: {:.3f}% | ".format(
+        epoch, running_loss, train_accuracy
+    )
+    log += "Epoch Time: {:.2f} secs".format(epoch_time)
+    print(log)
+
+def train(model, num_epochs, trainloader, device, criterion, optimizer, scheduler, kornia_aug=None, use_amp=False):
     epoch_losses = []
-    
     model_name = type(model).__name__
     print(f"Training model: {model_name} on {device}")
+    
+    # GradScaler for mixed precision training
+    scaler = GradScaler() if use_amp else None
 
     for epoch in range(1, num_epochs + 1):
         model.train()
         running_loss = 0.0
         epoch_time = time.time()
-        for i, data in enumerate(trainloader, 0):
-            # get the inputs
+        
+        # Use tqdm for the training progress bar
+        for i, data in tqdm(enumerate(trainloader, 0), total=len(trainloader), desc=f'Epoch {epoch}/{num_epochs}'):
+            # Get the inputs
             inputs, labels = data
-            # send them to device
+            # Send them to the device
             if kornia_aug is None:
                 inputs = inputs.to(device)
             else:
                 inputs = kornia_aug(inputs).to(device)
-            
             labels = labels.to(device)
+            
+            # Zero the parameter gradients
+            optimizer.zero_grad(set_to_none=True)
+            
+            # Mixed precision training
+            with autocast(enabled=use_amp):
+                outputs = model(inputs)  # Forward pass
+                loss = criterion(outputs, labels)  # Calculate the loss
+            
+            # Backpropagation and optimization with scaling if AMP is enabled
+            if use_amp:
+                scaler.scale(loss).backward()  # Backpropagation
+                scaler.step(optimizer)  # Update parameters
+                scaler.update()  # Update the scale for next iteration
+            else:
+                loss.backward()  # Backpropagation
+                optimizer.step()  # Update parameters
 
-            # forward + backward + optimize
-            outputs = model.forward(inputs) # forward pass
-            loss = criterion(outputs, labels) # calculate the loss
-            optimizer.zero_grad() # zero the parameter gradients
-            loss.backward() # backpropagation
-            optimizer.step() # update parameters
-
-            # print statistics
-            running_loss += loss.data.item()
+            # Accumulate the loss
+            running_loss += loss.item()
 
         # Normalizing the loss by the total number of train batches
         running_loss /= len(trainloader)
@@ -100,13 +123,12 @@ def train(model, num_epochs, trainloader, device, criterion, optimizer, schedule
         # Calculate training set accuracy of the existing model
         train_accuracy = calculate_accuracy(model, trainloader, device)
 
-        log = "Epoch: {} | Loss: {:.4f} | Training accuracy: {:.3f}% | ".format(epoch, running_loss, train_accuracy)
+        # Log the epoch statistics
         epoch_time = time.time() - epoch_time
-        log += "Epoch Time: {:.2f} secs".format(epoch_time)
-        print(log)
+        log_epoch(epoch, running_loss, train_accuracy, epoch_time)
         
-        # save model every 5 epochs
-        if epoch % 5 == 0:
+        # Save model every 10 epochs
+        if epoch % 10 == 0:
             save_model(model, optimizer, epoch, running_loss, model_name)
         
         # Call scheduler step after each epoch
@@ -115,13 +137,13 @@ def train(model, num_epochs, trainloader, device, criterion, optimizer, schedule
     return epoch_losses
 
 
-def open_nvidia_smi():
+def open_nvitop():
     try:
-        # Open a new cmd window and run the 'nvidia-smi -l 1' command to dynamically update GPU stats
-        subprocess.run('start cmd /K "nvidia-smi -l 1"', shell=True)
+        # Open a new cmd window and run 'nvitop -m' command for GPU monitoring
+        subprocess.run('start cmd /K "nvitop -m"', shell=True)
     
     except FileNotFoundError:
-        print("nvidia-smi not found. Make sure you have NVIDIA drivers installed.")
+        print("nvitop not found. Make sure you have installed nvitop.")
 
     
 
@@ -421,6 +443,93 @@ def adversarial_train(model, num_epochs, trainloader, device, criterion, optimiz
     return epoch_losses
 
 
+# def adversarial_train(model, num_epochs, trainloader, device, criterion, optimizer, attack_type='fgsm',
+#                       epsilon=0.03, adv_weight=0.5, alpha=0.01, num_iter=10, kornia_aug=None):
+#     epoch_losses = []
+    
+#     model_name = type(model).__name__
+#     print(f"Adversarial Training model: {model_name} on {device} with {attack_type.upper()} attack and adversarial weight {adv_weight}")
+
+#     # Initialize the attack based on the attack_type
+#     if attack_type.lower() == 'fgsm':
+#         attack = torchattacks.FGSM(model, eps=epsilon)
+#     elif attack_type.lower() == 'pgd':
+#         attack = torchattacks.PGD(model, eps=epsilon, alpha=alpha, steps=num_iter)
+#     else:
+#         raise ValueError(f"Unsupported attack type: {attack_type}. Choose 'fgsm' or 'pgd'.")
+
+#     for epoch in range(1, num_epochs + 1):
+#         model.train()
+#         running_loss = 0.0
+#         epoch_time = time.time()
+        
+#         # Use tqdm for progress bar
+#         with tqdm(total=len(trainloader), desc=f'Epoch {epoch}/{num_epochs}', unit='batch') as pbar:
+#             for batch_idx, data in enumerate(trainloader, 0):
+#                 # Get the inputs and labels
+#                 inputs, labels = data
+                
+#                 # Apply Kornia augmentations if provided
+#                 if kornia_aug is None:
+#                     inputs = inputs.to(device)
+#                 else:
+#                     inputs = kornia_aug(inputs).to(device)
+#                 labels = labels.to(device)
+
+#                 optimizer.zero_grad()
+
+#                 # Clean forward pass
+#                 clean_outputs = model(inputs)
+#                 clean_loss = criterion(clean_outputs, labels)
+                
+#                 # Generate adversarial examples using the torchattacks package
+#                 adv_inputs = attack(inputs, labels)
+
+#                 # Forward pass on adversarial examples
+#                 adv_outputs = model(adv_inputs)
+#                 adv_loss = criterion(adv_outputs, labels)
+
+#                 # Combine losses from clean and adversarial examples using adv_weight
+#                 loss = (1 - adv_weight) * clean_loss + adv_weight * adv_loss
+#                 loss.backward()
+#                 optimizer.step()
+
+#                 running_loss += loss.data.item()
+#                 pbar.update(1)  # Update progress bar
+
+#             # Normalize the loss
+#             running_loss /= len(trainloader)
+#             epoch_losses.append(running_loss)
+
+#             # Calculate training accuracy
+#             train_accuracy = calculate_accuracy(model, trainloader, device)
+
+#             # Log the epoch statistics
+#             epoch_time = time.time() - epoch_time
+#             log_epoch(epoch, running_loss, train_accuracy, epoch_time)
+        
+#             # Save the model every 5 epochs
+#             if epoch % 5 == 0:
+#                 print('==> Saving model ...')
+#                 state = {
+#                     'net': model.state_dict(),
+#                     'optimizer': optimizer.state_dict(),
+#                     'epoch': epoch,
+#                     'loss': running_loss
+#                 }
+
+#                 current_time = datetime.now().strftime("%H%M%S_%d%m%Y")  # Format: HHMMSS_DDMMYYYY
+#                 filename = f'./checkpoints/adv_attk_{model_name}_{current_time}.pth'
+
+#                 if not os.path.isdir('checkpoints'):
+#                     os.mkdir('checkpoints')
+
+#                 torch.save(state, filename)
+#                 print(f'Saved as {filename}')
+
+#     return epoch_losses
+
+
 def calculate_accuracy_attack(model, dataloader, device, attack_type, epsilon, alpha=None, num_iter=None):
     model.eval()  # Set model to evaluation mode
     total_correct = 0
@@ -457,254 +566,3 @@ def calculate_accuracy_attack(model, dataloader, device, attack_type, epsilon, a
     # Calculate model accuracy
     model_accuracy = total_correct / total_images * 100
     return model_accuracy
-
-
-
-
-
-
-
-
-
-# def adversarial_train(model, num_epochs, trainloader, device, criterion, optimizer, attack_type='fgsm',
-#                       epsilon=0.03,adv_weight=0.5, alpha=0.01, num_iter=10, kornia_aug=None):
-#     epoch_losses = []
-    
-#     model_name = type(model).__name__
-#     print(f"Adversarial Training model: {model_name} on {device} with {attack_type.upper()} attack and adversarial weight {adv_weight}")
-
-#     for epoch in range(1, num_epochs + 1):
-#         model.train()
-#         running_loss = 0.0
-#         epoch_time = time.time()
-        
-#         for batch_idx, data in enumerate(trainloader, 0):
-#             # get the inputs and labels
-#             inputs, labels = data
-            
-#             # Apply Kornia augmentations if provided
-#             if kornia_aug is None:
-#                 inputs = inputs.to(device)
-#             else:
-#                 inputs = kornia_aug(inputs).to(device)
-#             labels = labels.to(device)
-
-#             optimizer.zero_grad()
-
-#             # Clean forward pass
-#             clean_outputs = model(inputs)
-#             clean_loss = criterion(clean_outputs, labels)
-            
-#             # Generate adversarial examples
-#             if attack_type == 'fgsm':
-#                 adv_inputs = fgsm_attack(model, inputs, labels, epsilon, criterion)
-#             # elif attack_type == 'pgd':
-#             #     adv_inputs = pgd_attack(model, inputs, labels, epsilon, alpha, num_iter)
-            
-#             # Forward pass on adversarial examples
-#             adv_outputs = model(adv_inputs)
-#             adv_loss = criterion(adv_outputs, labels)
-
-#             # Combine losses from clean and adversarial examples using adv_weight
-#             loss = (1 - adv_weight) * clean_loss + adv_weight * adv_loss
-#             loss.backward()
-#             optimizer.step()
-
-#             running_loss += loss.data.item()
-
-#         # Normalize the loss
-#         running_loss /= len(trainloader)
-#         epoch_losses.append(running_loss)
-
-#         # Calculate training accuracy
-#         train_accuracy = calculate_accuracy(model, trainloader, device)
-
-#         log = f"Epoch: {epoch} | Loss: {running_loss:.4f} | Training Accuracy: {train_accuracy:.3f}% | "
-#         epoch_time = time.time() - epoch_time
-#         log += f"Epoch Time: {epoch_time:.2f} secs"
-#         print(log)
-        
-#         # Save the model every 5 epochs
-#         if epoch % 5 == 0:
-#             print('==> Saving model ...')
-#             state = {
-#                 'net': model.state_dict(),
-#                 'optimizer': optimizer.state_dict(),
-#                 'epoch': epoch,
-#                 'loss': running_loss
-#             }
-
-#             current_time = datetime.now().strftime("%H%M%S_%d%m%Y")  # Format: HHMMSS_DDMMYYYY
-#             filename = f'./checkpoints/adv_attk_{model_name}_{current_time}.pth'
-
-#             if not os.path.isdir('checkpoints'):
-#                 os.mkdir('checkpoints')
-
-#             torch.save(state, filename)
-#             print(f'Saved as {filename}')
-    
-#     return epoch_losses
-
-
-
-
-# def fgsm_attack(model, inputs, labels, epsilon, criterion):
-#     # Ensure the model is in evaluation mode
-#     model.eval()
-    
-#     # Set requires_grad attribute of tensor to track gradients
-#     inputs.requires_grad = True
-    
-#     # Perform the forward pass
-#     outputs = model(inputs)
-#     loss = criterion(outputs, labels)
-    
-#     # Zero all existing gradients
-#     model.zero_grad()
-    
-#     # Backward pass to calculate gradients of the loss with respect to inputs
-#     loss.backward()
-    
-#     # Collect the sign of the gradients
-#     grad_sign = inputs.grad.data.sign()
-    
-#     # Create the perturbed image by adjusting each pixel of the input image
-#     perturbed_inputs = inputs + epsilon * grad_sign
-    
-#     # Clip the perturbation to ensure the pixel values are valid (i.e., between 0 and 1)
-#     perturbed_inputs = torch.clamp(perturbed_inputs, 0, 1)
-    
-#     return perturbed_inputs
-
-
-
-# def calculate_accuracy_attack(model, dataloader, device, attack_type, epsilon, criterion, alpha=None, num_iter=None):
-#     model.eval()  # Set model to evaluation mode
-#     total_correct = 0
-#     total_images = 0
-
-#     for inputs, labels in dataloader:
-        
-#         inputs = inputs.to(device)
-#         labels = labels.to(device)
-
-#         # Generate perturbed images using the specified attack
-#         if attack_type.lower() == 'fgsm':
-#             # No torch.no_grad() here because gradients are needed for FGSM
-#             perturbed_images = fgsm_attack(model, inputs, labels, epsilon, criterion)
-#         # elif attack_type.lower() == 'pgd':
-#         #     if alpha is None or num_iter is None:
-#         #         raise ValueError("Alpha and num_iter must be specified for PGD attack.")
-#         #     perturbed_images = pgd_attack(model, inputs, labels, epsilon, alpha, num_iter, criterion)
-#         else:
-#             raise ValueError("Unsupported attack type. Use 'fgsm' or 'pgd'.")
-
-#         with torch.no_grad():  # Now, disable gradient tracking for accuracy calculation
-#             # Get model predictions on the perturbed images
-#             outputs = model(perturbed_images)
-#             _, predicted = torch.max(outputs.data, 1)
-
-#             # Update total images and correct predictions
-#             total_images += labels.size(0)
-#             total_correct += (predicted == labels).sum().item()
-
-#     # Calculate model accuracy
-#     model_accuracy = total_correct / total_images * 100
-#     return model_accuracy
-
-
-
-
-# def fgsm_attack_single_point(image, epsilon, data_grad):
-#     # Collect the element-wise sign of the data gradient
-#     sign_data_grad = data_grad.sign()
-#     # Create the perturbed image by adjusting each pixel of the input image
-#     perturbed_image = image + epsilon*sign_data_grad
-#     # Adding clipping to maintain [0,1] range
-#     perturbed_image = torch.clamp(perturbed_image, 0, 1)
-#     # Return the perturbed image
-#     return perturbed_image 
-
-# def denorm(batch, device, mean=[0.1307], std=[0.3081]):
-
-#     if isinstance(mean, list):
-#         mean = torch.tensor(mean).to(device)
-#     if isinstance(std, list):
-#         std = torch.tensor(std).to(device)
-
-#     return batch * std.view(1, -1, 1, 1) + mean.view(1, -1, 1, 1)
-
-
-# def test_fgsm_single_point_attack(model, device, testloader, epsilon, criterion):
-#     # Accuracy counter
-#     correct = 0
-#     total = 0
-#     adv_examples = []
-
-#     # Set the model to evaluation mode
-#     model.eval()
-
-#     # Loop over all examples in the test set with batch size of 1
-#     for data, target in testloader:
-#         # Send the data and labels to the device
-#         data, target = data.to(device), target.to(device)
-
-#         # Ensure we're working with a single point
-#         assert data.size(0) == 1, "The batch size should be 1 for this function."
-
-#         # Set requires_grad attribute of tensor for the attack
-#         data.requires_grad = True
-
-#         # Forward pass
-#         output = model(data)
-#         init_pred = output.max(1, keepdim=True)[1]  # Get the index of the max log-probability
-
-#         # Calculate the loss
-#         loss = criterion(output, target)
-
-#         # Zero all existing gradients
-#         model.zero_grad()
-
-#         # Backward pass to calculate gradients
-#         loss.backward()
-
-#         # Collect the gradients for this point
-#         data_grad = data.grad.data
-
-#         # Restore the data to its original scale (denormalization)
-#         # data_denorm = denorm(data, device)
-#         data_denorm = data
-#         # Apply FGSM attack
-#         perturbed_data = fgsm_attack_single_point(data_denorm, epsilon, data_grad)
-
-#         # Reapply normalization to the perturbed data
-#         perturbed_data_normalized = perturbed_data
-#         # perturbed_data_normalized = transforms.Normalize((0.1307,), (0.3081,))(perturbed_data)
-
-#         # Disable gradients for inference (no need for gradients now)
-#         with torch.no_grad():
-#             # Re-classify the perturbed image
-#             output = model(perturbed_data_normalized)
-
-#         # Get final prediction
-#         final_pred = output.max(1, keepdim=True)[1]
-
-#         # Update the correct count
-#         correct += (final_pred == target).sum().item()
-#         total += target.size(0)
-
-#         # Save some adversarial examples for visualization
-#         if len(adv_examples) < 5:
-#             adv_ex = perturbed_data.squeeze().detach().cpu().numpy()
-#             adv_examples.append((init_pred.item(), final_pred.item(), adv_ex))
-
-#         # After processing each point, delete the gradients to save memory
-#         # data.grad = None  # Explicitly clear gradients for this data point
-#         # torch.cuda.empty_cache()  # Clear the CUDA cache to free up memory
-
-#     # Calculate final accuracy for this epsilon
-#     final_acc = correct / float(total)
-#     # print(f"Epsilon: {epsilon}\tTest Accuracy = {correct} / {total} = {final_acc}")
-    
-#     # Return the accuracy and adversarial examples
-#     return final_acc, adv_examples
