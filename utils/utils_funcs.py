@@ -22,22 +22,68 @@ from prettytable import PrettyTable
 import torchattacks
 from torch.cuda.amp import autocast, GradScaler
 from tqdm import tqdm
+from PIL import Image
+from IPython.display import display
+from sklearn.decomposition import PCA
 
 
 
+def plot_random_images(dataset, num_imgs=20):
+    # Sample random indices from the dataset
+    random_indices = random.sample(range(len(dataset)), min(num_imgs, len(dataset)))
+        
+    # Calculate the number of rows needed (5 images per row)
+    num_rows = (len(random_indices) + 4) // 5  # +4 to round up for any remainder
+        
+    # Set the figure size
+    plt.figure(figsize=(15, 3 * num_rows))  # Adjust height based on number of rows
+        
+    # Define the label mapping with colors
+    label_mapping = {
+        0: ("Mild_Demented", "blue"),
+        1: ("Moderate_Demented", "orange"),
+        2: ("Non-Demented", "green"),
+        3: ("Very_Mild_Demented", "red")
+    }
 
-def save_model(model, optimizer, epoch, running_loss, model_name):
+    for i, idx in enumerate(random_indices):
+        image, label = dataset[idx]
+        image = image.permute(1, 2, 0)  # Change dimension order if needed
+        plt.subplot(num_rows, 5, i + 1)  # 5 columns
+        plt.imshow(image)
+        
+        # Get label text and color
+        label_text, label_color = label_mapping.get(label, (str(label), "black"))  # No .item() since label is an int
+        
+        # Set title with color and label number
+        plt.title(f"{label} - {label_text}", color=label_color)
+        plt.axis('off')
+
+    # Create a legend with colored labels at the top
+    handles = [plt.Line2D([0], [0], marker='o', color='w', label=f"{i} - {label_mapping[i][0]}",
+                        markerfacecolor=label_mapping[i][1], markersize=10) for i in range(4)]
+
+    # Adjust legend position to be above all images
+    plt.legend(handles=handles, title="Labels", bbox_to_anchor=(0.2, 5), loc='center right', ncol=4, 
+           title_fontproperties={'weight': 'bold'})
+
+    plt.tight_layout()
+    plt.subplots_adjust(top=0.85)  # Adjust space to fit legend above the images
+    plt.show()
+
+
+def save_model(model, optimizer, epoch, epoch_losses, model_name, cur_loss):
     """Save the model checkpoint."""
     print('==> Saving model ...')
     state = {
         'net': model.state_dict(),
         'optimizer': optimizer.state_dict(),
-        'epoch': epoch,                      
-        'loss': running_loss                   
+        'epoch': epoch,                   
+        'epoch_losses': epoch_losses                   
     }
     
     current_time = datetime.now().strftime("%H%M%S_%d%m%Y")  # Format: HHMMSS_DDMMYYYY
-    filename = f'./checkpoints/{model_name}_{current_time}.pth'
+    filename = f'./checkpoints/{model_name}_{current_time}_loss_{cur_loss}.pth'
     
     if not os.path.isdir('checkpoints'):
         os.mkdir('checkpoints')
@@ -128,8 +174,8 @@ def train(model, num_epochs, trainloader, device, criterion, optimizer, schedule
         log_epoch(epoch, running_loss, train_accuracy, epoch_time)
         
         # Save model every 10 epochs
-        if epoch % 10 == 0:
-            save_model(model, optimizer, epoch, running_loss, model_name)
+        if epoch % 5 == 0:
+            save_model(model, optimizer, epoch, epoch_losses, model_name, running_loss)
         
         # Call scheduler step after each epoch
         scheduler.step()    
@@ -145,6 +191,15 @@ def open_nvitop():
     except FileNotFoundError:
         print("nvitop not found. Make sure you have installed nvitop.")
 
+def load_and_display_image(model_name, asset_name):
+    # Construct the path to the image
+    image_path = f"assets/{model_name}/{asset_name}.png"
+    
+    # Load the image using PIL
+    img = Image.open(image_path)
+    
+    # Display the image inline in the notebook
+    display(img)
     
 
 def plot_loss_curve(epoch_losses, num_epochs):
@@ -157,41 +212,43 @@ def plot_loss_curve(epoch_losses, num_epochs):
     
     plt.show()
     
-def plot_tsne(data_set, num_classes, header):
-    
-    # Check if data_set is a PyTorch Dataset or Subset
-    if isinstance(data_set, torch.utils.data.Dataset):
-        # Assuming the dataset is a TensorDataset or contains (features, labels)
-        features = []
-        labels = []
-        
-        # Iterate through the dataset to collect features and labels
-        for data, label in data_set:
-            features.append(data.view(-1))  # Flatten the features
-            labels.append(label)
-        
-        # Convert lists to tensors
-        features = torch.stack(features)
-        labels = torch.tensor(labels)
-    else:
-        # If the data_set is a dictionary (if this is ever the case)
-        features = data_set['features']
-        labels = data_set['labels']
+def extract_features(model, dataloader, device):
+    """Extract features from DINO V2 model before the fully connected layers."""
+    model.eval()  # Set model to evaluation mode
+    features = []
+    labels = []
 
-        # Flatten the features if needed (for example, if they are images)
-        if len(features.shape) > 2:  # Assuming shape [batch_size, channels, width, height]
-            features = features.view(features.size(0), -1)
+    with torch.no_grad():
+        for inputs, lbl in dataloader:
+            inputs = inputs.to(device)  # Move inputs to the specified device (GPU)
+            # Extract features from the model
+            output = model(inputs)
+            features.append(output)  # Store the tensor output
+            labels.append(lbl)  # Store the tensor labels
 
-    # Apply t-SNE to reduce features to 2D for visualization
-    tsne = TSNE(n_components=2)
-    transformed_features = tsne.fit_transform(features)
+    # Convert lists of tensors to NumPy arrays before returning
+    features = np.concatenate([f.cpu().numpy() for f in features])  # Combine all feature arrays
+    labels = np.concatenate([l.cpu().numpy() for l in labels])  # Combine all label arrays
+    return features, labels
 
-    # Plot the t-SNE result
-    plt.figure(figsize=(8, 6))
-    scatter = plt.scatter(transformed_features[:, 0], transformed_features[:, 1], c=labels, cmap=plt.cm.get_cmap('jet', num_classes))
-    plt.colorbar(scatter)
-    plt.title(f't-SNE Data Distribution for {header}')
+def plot_tsne(features, labels, n_components=2, perplexity=30, learning_rate=200, n_iter=1000):
+    """Plot t-SNE visualization of the features with adjustable parameters."""
+    tsne = TSNE(n_components=n_components, perplexity=perplexity, learning_rate=learning_rate, n_iter=n_iter, random_state=42)
+    reduced_features = tsne.fit_transform(features)
+
+    plt.figure(figsize=(10, 8))
+    scatter = plt.scatter(reduced_features[:, 0], reduced_features[:, 1], c=labels, cmap='viridis', alpha=0.6)
+    plt.colorbar(scatter, label='Alzheimer Severity Class')
+    plt.title(f't-SNE Visualization (Perplexity: {perplexity}, Learning Rate: {learning_rate}, Iterations: {n_iter})')
+    plt.xlabel('t-SNE Component 1')
+    plt.ylabel('t-SNE Component 2')
+    plt.grid()
     plt.show()
+
+def visualize_dino_tsne(model, dataloader, device, perplexity=30, learning_rate=200, n_iter=1000):
+    """Main function to visualize t-SNE of DINO V2 output."""
+    features, labels = extract_features(model, dataloader, device)
+    plot_tsne(features, labels, perplexity=perplexity, learning_rate=learning_rate, n_iter=n_iter)
 
     
 def apply_transformations(dataset, transform):
