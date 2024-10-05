@@ -71,25 +71,45 @@ def plot_random_images(dataset, num_imgs=20):
     plt.subplots_adjust(top=0.85)  # Adjust space to fit legend above the images
     plt.show()
 
+def create_training_session(model_name):
+    """Create a training session directory for saving model checkpoints and logs."""
+    # Create a directory path based on the model name and current date
+    current_time = datetime.now().strftime("%H%M%S_%d%m%Y")
+    session_dir = f"./checkpoints/{model_name}_{current_time}"
+    
+    # Create the directory
+    os.makedirs(session_dir, exist_ok=True)
 
-def save_model(model, optimizer, epoch, epoch_losses, model_name, cur_loss):
-    """Save the model checkpoint."""
+    print(f"Created training session directory: {session_dir}")
+    return session_dir
+
+def save_model(model, optimizer, epoch, train_epoch_losses, validation_epoch_losses, 
+               train_epoch_accuracies, validation_epoch_accuracies,  # Add accuracy lists
+               model_name, cur_train_loss, cur_validation_loss, session_dir):
+    """Save the model checkpoint to the specified session directory."""
     print('==> Saving model ...')
+
+    # Save the model state, optimizer state, losses, and accuracies for all epochs
     state = {
         'net': model.state_dict(),
         'optimizer': optimizer.state_dict(),
         'epoch': epoch,                   
-        'epoch_losses': epoch_losses                   
+        'train_epoch_losses': train_epoch_losses,
+        'validation_epoch_losses': validation_epoch_losses,
+        'train_epoch_accuracies': train_epoch_accuracies,  # Save train accuracies
+        'validation_epoch_accuracies': validation_epoch_accuracies  # Save validation accuracies
     }
     
+    # Create a filename based on the model name, current time, training loss, and validation loss
     current_time = datetime.now().strftime("%H%M%S_%d%m%Y")  # Format: HHMMSS_DDMMYYYY
-    filename = f'./checkpoints/{model_name}_{current_time}_loss_{cur_loss}.pth'
+    filename = f'{session_dir}/{model_name}_{current_time}_train_{cur_train_loss:.4f}_val_{cur_validation_loss:.4f}.pth'
     
-    if not os.path.isdir('checkpoints'):
-        os.mkdir('checkpoints')
-        
+    # Ensure the session directory exists
+    os.makedirs(session_dir, exist_ok=True)
+    
+    # Save the state to a file
     torch.save(state, filename)
-    print(f'saved as {filename}')
+    print(f'Saved as {filename}')
 
 
 def calculate_accuracy(model, dataloader, device):
@@ -110,77 +130,131 @@ def calculate_accuracy(model, dataloader, device):
     return model_accuracy
 
 
-def log_epoch(epoch, running_loss, train_accuracy, epoch_time):
+def log_epoch(epoch, train_loss, train_accuracy, validation_loss, validation_accuracy, epoch_time):
     """Logs the statistics for the current epoch."""
-    log = "Epoch: {} | Loss: {:.4f} | Training accuracy: {:.3f}% | ".format(
-        epoch, running_loss, train_accuracy
+    log = "Epoch: {} | Training Loss: {:.4f} | Training Accuracy: {:.3f}% | ".format(
+        epoch, train_loss, train_accuracy
+    )
+    log += "Validation Loss: {:.4f} | Validation Accuracy: {:.3f}% | ".format(
+        validation_loss, validation_accuracy
     )
     log += "Epoch Time: {:.2f} secs".format(epoch_time)
     print(log)
 
-def train(model, num_epochs, trainloader, device, criterion, optimizer, scheduler, kornia_aug=None, use_amp=False):
-    epoch_losses = []
-    model_name = type(model).__name__
-    print(f"Training model: {model_name} on {device}")
+def train_epoch(model, trainloader, device, criterion, optimizer, kornia_aug=None, use_amp=False):
+    model.train()
+    train_loss = 0.0
     
     # GradScaler for mixed precision training
     scaler = GradScaler() if use_amp else None
 
-    for epoch in range(1, num_epochs + 1):
-        model.train()
-        running_loss = 0.0
-        epoch_time = time.time()
-        
-        # Use tqdm for the training progress bar
-        for i, data in tqdm(enumerate(trainloader, 0), total=len(trainloader), desc=f'Epoch {epoch}/{num_epochs}'):
-            # Get the inputs
+    for i, data in tqdm(enumerate(trainloader, 0), total=len(trainloader), desc='Training'):
+        inputs, labels = data
+        if kornia_aug is None:
+            inputs = inputs.to(device)
+        else:
+            inputs = kornia_aug(inputs).to(device)
+        labels = labels.to(device)
+
+        optimizer.zero_grad(set_to_none=True)
+
+        # Mixed precision training
+        with autocast(enabled=use_amp):
+            outputs = model(inputs)
+            loss = criterion(outputs, labels)
+
+        # Backpropagation and optimization
+        if use_amp:
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
+        else:
+            loss.backward()
+            optimizer.step()
+
+        train_loss += loss.item()
+
+    train_loss /= len(trainloader)
+    train_accuracy = calculate_accuracy(model, trainloader, device)
+
+    return train_loss, train_accuracy
+
+
+def validate_epoch(model, validationloader, device, criterion, kornia_aug=None, use_amp=False):
+    model.eval()
+    validation_loss = 0.0
+
+    with torch.no_grad():
+        for i, data in tqdm(enumerate(validationloader, 0), total=len(validationloader), desc='Validation'):
             inputs, labels = data
-            # Send them to the device
             if kornia_aug is None:
                 inputs = inputs.to(device)
             else:
                 inputs = kornia_aug(inputs).to(device)
             labels = labels.to(device)
-            
-            # Zero the parameter gradients
-            optimizer.zero_grad(set_to_none=True)
-            
-            # Mixed precision training
+
             with autocast(enabled=use_amp):
-                outputs = model(inputs)  # Forward pass
-                loss = criterion(outputs, labels)  # Calculate the loss
-            
-            # Backpropagation and optimization with scaling if AMP is enabled
-            if use_amp:
-                scaler.scale(loss).backward()  # Backpropagation
-                scaler.step(optimizer)  # Update parameters
-                scaler.update()  # Update the scale for next iteration
-            else:
-                loss.backward()  # Backpropagation
-                optimizer.step()  # Update parameters
+                outputs = model(inputs)
+                loss = criterion(outputs, labels)
 
-            # Accumulate the loss
-            running_loss += loss.item()
+            validation_loss += loss.item()
 
-        # Normalizing the loss by the total number of train batches
-        running_loss /= len(trainloader)
-        epoch_losses.append(running_loss)
+    validation_loss /= len(validationloader)
+    validation_accuracy = calculate_accuracy(model, validationloader, device)
 
-        # Calculate training set accuracy of the existing model
-        train_accuracy = calculate_accuracy(model, trainloader, device)
+    return validation_loss, validation_accuracy
+
+
+def train_model(model, num_epochs, trainloader, validationloader, device, criterion, optimizer, scheduler, kornia_aug=None, use_amp=False):
+    epoch_train_losses = []
+    epoch_validation_losses = []
+    epoch_train_accuracies = []  # Store train accuracies
+    epoch_validation_accuracies = []  # Store validation accuracies
+    model_name = type(model).__name__
+
+    # Create a training session directory
+    session_dir = create_training_session(model_name)
+
+    print(f"Training model: {model_name} on {device}")
+
+    for epoch in range(1, num_epochs + 1):
+        epoch_time = time.time()
+
+        # Training phase
+        train_loss, train_accuracy = train_epoch(model, trainloader, device, criterion, optimizer, kornia_aug, use_amp)
+        epoch_train_losses.append(train_loss)
+        epoch_train_accuracies.append(train_accuracy)  # Save train accuracy
+
+        # Validation phase
+        validation_loss, validation_accuracy = validate_epoch(model, validationloader, device, criterion, kornia_aug, use_amp)
+        epoch_validation_losses.append(validation_loss)
+        epoch_validation_accuracies.append(validation_accuracy)  # Save validation accuracy
 
         # Log the epoch statistics
         epoch_time = time.time() - epoch_time
-        log_epoch(epoch, running_loss, train_accuracy, epoch_time)
-        
-        # Save model every 10 epochs
-        if epoch % 5 == 0:
-            save_model(model, optimizer, epoch, epoch_losses, model_name, running_loss)
-        
-        # Call scheduler step after each epoch
-        scheduler.step()    
+        log_epoch(epoch, train_loss, train_accuracy, validation_loss, validation_accuracy, epoch_time)
 
-    return epoch_losses
+        # Save model every 5 epochs
+        if epoch % 5 == 0:
+            save_model(
+                model,
+                optimizer,
+                epoch,
+                epoch_train_losses,
+                epoch_validation_losses,
+                epoch_train_accuracies,  # Pass train accuracies to save_model
+                epoch_validation_accuracies,  # Pass validation accuracies to save_model
+                model_name,
+                train_loss,
+                validation_loss,
+                session_dir  # Pass the session directory to save_model
+            )
+
+        # Call scheduler step after each epoch
+        scheduler.step()
+
+    return epoch_train_losses, epoch_validation_losses, epoch_train_accuracies, epoch_validation_accuracies
+
 
 
 def open_nvitop():
@@ -202,15 +276,58 @@ def load_and_display_image(model_name, asset_name):
     display(img)
     
 
-def plot_loss_curve(epoch_losses, num_epochs):
-    _, ax = plt.subplots(figsize=(5, 5))
-    ax.plot(range(num_epochs), epoch_losses, color='red')
-    ax.set_title('Train Loss')
-    ax.set_xlabel('Epochs')
-    ax.set_ylabel('Loss')
-    ax.grid(True)
+def plot_loss_curve(epoch_train_losses, epoch_validation_losses, num_epochs):
+    plt.figure(figsize=(5, 5))
     
+    # Plot training loss
+    plt.plot(range(1, num_epochs + 1), epoch_train_losses, color='purple', label='Training Loss')
+    
+    # Plot validation loss
+    plt.plot(range(1, num_epochs + 1), epoch_validation_losses, color='green', label='Validation Loss')
+    
+    # Add titles and labels
+    plt.title('Training and Validation Loss Curve')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+
+    # Adjust x-ticks to avoid overlap by showing every 5th epoch
+    plt.xticks(range(1, num_epochs + 1, 5))
+    plt.grid(True)
+
+    # Add legend
+    plt.legend(loc='upper right')
+
+    # Show the plot
+    plt.tight_layout()
     plt.show()
+    
+    
+    
+def plot_accuracy_curve(epoch_train_accuracies, epoch_validation_accuracies, num_epochs):
+    plt.figure(figsize=(5, 5))
+    
+    # Plot training accuracy
+    plt.plot(range(1, num_epochs + 1), epoch_train_accuracies, color='red', label='Training Accuracy')
+    
+    # Plot validation accuracy
+    plt.plot(range(1, num_epochs + 1), epoch_validation_accuracies, color='blue', label='Validation Accuracy')
+    
+    # Add titles and labels
+    plt.title('Training and Validation Accuracy Curve')
+    plt.xlabel('Epochs')
+    plt.ylabel('Accuracy')
+
+    # Adjust x-ticks to avoid overlap by showing every 5th epoch
+    plt.xticks(range(1, num_epochs + 1, 5))
+    plt.grid(True)
+
+    # Add legend
+    plt.legend(loc='lower right')
+
+    # Show the plot
+    plt.tight_layout()
+    plt.show() 
+    
     
 def extract_features(model, dataloader, device):
     """Extract features from DINO V2 model before the fully connected layers."""
@@ -414,10 +531,89 @@ def plot_adversarial_examples(epsilons, examples, figsize=(12, 15)):
     plt.subplots_adjust(hspace=0.4, wspace=0.2)  # Increase space between subplots
     plt.show()
 
+def adversarial_train_epoch(model, trainloader, device, criterion, optimizer, attack, adv_weight, kornia_aug=None, use_amp=False):
+    model.train()
+    train_loss = 0.0
+    
+    # GradScaler for mixed precision training
+    scaler = GradScaler() if use_amp else None
 
-def adversarial_train(model, num_epochs, trainloader, device, criterion, optimizer, attack_type='fgsm',
-                      epsilon=0.03, adv_weight=0.5, alpha=0.01, num_iter=10, kornia_aug=None):
-    epoch_losses = []
+    for i, data in tqdm(enumerate(trainloader, 0), total=len(trainloader), desc='Training'):
+        inputs, labels = data
+        if kornia_aug is None:
+            inputs = inputs.to(device)
+        else:
+            inputs = kornia_aug(inputs).to(device)
+        labels = labels.to(device)
+
+        optimizer.zero_grad(set_to_none=True)
+
+        # Mixed precision training
+        with autocast(enabled=use_amp):
+            # Clean forward pass
+            clean_outputs = model(inputs)
+            clean_loss = criterion(clean_outputs, labels)
+
+            # Generate adversarial examples
+            adv_inputs = attack(inputs, labels)
+
+            # Forward pass on adversarial examples
+            adv_outputs = model(adv_inputs)
+            adv_loss = criterion(adv_outputs, labels)
+
+            # Combine losses from clean and adversarial examples
+            loss = (1 - adv_weight) * clean_loss + adv_weight * adv_loss
+
+        # Backpropagation and optimization
+        if use_amp:
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
+        else:
+            loss.backward()
+            optimizer.step()
+
+        train_loss += loss.item()
+
+    train_loss /= len(trainloader)
+    train_accuracy = calculate_accuracy(model, trainloader, device)
+
+    return train_loss, train_accuracy
+
+
+def adversarial_validation_epoch(model, validationloader, device, criterion, kornia_aug=None, use_amp=False):
+    model.eval()
+    validation_loss = 0.0
+    correct = 0
+    total = 0
+
+    with torch.no_grad():
+        for data in tqdm(validationloader, desc='Validating'):
+            inputs, labels = data
+            if kornia_aug is None:
+                inputs = inputs.to(device)
+            else:
+                inputs = kornia_aug(inputs).to(device)
+            labels = labels.to(device)
+
+            with autocast(enabled=use_amp):
+                outputs = model(inputs)
+                loss = criterion(outputs, labels)
+
+            validation_loss += loss.item()
+            _, predicted = torch.max(outputs.data, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+
+    validation_loss /= len(validationloader)
+    validation_accuracy = 100 * correct / total
+
+    return validation_loss, validation_accuracy
+
+def adversarial_train_model(model, num_epochs, trainloader, validationloader, device, criterion, optimizer, attack_type='fgsm',
+                      epsilon=0.03, adv_weight=0.5, alpha=0.01, num_iter=10, kornia_aug=None, use_amp=False):
+    epoch_train_losses = []
+    epoch_validation_losses = []
     
     model_name = type(model).__name__
     print(f"Adversarial Training model: {model_name} on {device} with {attack_type.upper()} attack and adversarial weight {adv_weight}")
@@ -430,161 +626,39 @@ def adversarial_train(model, num_epochs, trainloader, device, criterion, optimiz
     else:
         raise ValueError(f"Unsupported attack type: {attack_type}. Choose 'fgsm' or 'pgd'.")
 
+    # Create a session directory for saving the model
+    session_dir = create_training_session(model_name)
+
     for epoch in range(1, num_epochs + 1):
-        model.train()
-        running_loss = 0.0
         epoch_time = time.time()
-        
-        for batch_idx, data in enumerate(trainloader, 0):
-            # Get the inputs and labels
-            inputs, labels = data
-            
-            # Apply Kornia augmentations if provided
-            if kornia_aug is None:
-                inputs = inputs.to(device)
-            else:
-                inputs = kornia_aug(inputs).to(device)
-            labels = labels.to(device)
 
-            optimizer.zero_grad()
+        # Training phase
+        train_loss, train_accuracy = adversarial_train_epoch(model, trainloader, device, criterion, optimizer, attack, adv_weight, kornia_aug, use_amp)
+        epoch_train_losses.append(train_loss)
 
-            # Clean forward pass
-            clean_outputs = model(inputs)
-            clean_loss = criterion(clean_outputs, labels)
-            
-            # Generate adversarial examples using the torchattacks package
-            adv_inputs = attack(inputs, labels)
+        # Validation phase
+        validation_loss, validation_accuracy = adversarial_validation_epoch(model, validationloader, device, criterion, kornia_aug, use_amp)
+        epoch_validation_losses.append(validation_loss)
 
-            # Forward pass on adversarial examples
-            adv_outputs = model(adv_inputs)
-            adv_loss = criterion(adv_outputs, labels)
-
-            # Combine losses from clean and adversarial examples using adv_weight
-            loss = (1 - adv_weight) * clean_loss + adv_weight * adv_loss
-            loss.backward()
-            optimizer.step()
-
-            running_loss += loss.data.item()
-
-        # Normalize the loss
-        running_loss /= len(trainloader)
-        epoch_losses.append(running_loss)
-
-        # Calculate training accuracy
-        train_accuracy = calculate_accuracy(model, trainloader, device)
-
-        log = f"Epoch: {epoch} | Loss: {running_loss:.4f} | Training Accuracy: {train_accuracy:.3f}% | "
+        # Log the epoch statistics
         epoch_time = time.time() - epoch_time
-        log += f"Epoch Time: {epoch_time:.2f} secs"
-        print(log)
-        
-        # Save the model every 5 epochs
+        log_epoch(epoch, train_loss, train_accuracy, validation_loss, validation_accuracy, epoch_time)
+
+        # Save model every 5 epochs
         if epoch % 5 == 0:
-            print('==> Saving model ...')
-            state = {
-                'net': model.state_dict(),
-                'optimizer': optimizer.state_dict(),
-                'epoch': epoch,
-                'loss': running_loss
-            }
+            save_model(
+                model,
+                optimizer,
+                epoch,
+                epoch_train_losses,
+                epoch_validation_losses,
+                model_name,
+                train_loss,
+                validation_loss,
+                session_dir
+            )
 
-            current_time = datetime.now().strftime("%H%M%S_%d%m%Y")  # Format: HHMMSS_DDMMYYYY
-            filename = f'./checkpoints/adv_attk_{model_name}_{current_time}.pth'
-
-            if not os.path.isdir('checkpoints'):
-                os.mkdir('checkpoints')
-
-            torch.save(state, filename)
-            print(f'Saved as {filename}')
-
-    return epoch_losses
-
-
-# def adversarial_train(model, num_epochs, trainloader, device, criterion, optimizer, attack_type='fgsm',
-#                       epsilon=0.03, adv_weight=0.5, alpha=0.01, num_iter=10, kornia_aug=None):
-#     epoch_losses = []
-    
-#     model_name = type(model).__name__
-#     print(f"Adversarial Training model: {model_name} on {device} with {attack_type.upper()} attack and adversarial weight {adv_weight}")
-
-#     # Initialize the attack based on the attack_type
-#     if attack_type.lower() == 'fgsm':
-#         attack = torchattacks.FGSM(model, eps=epsilon)
-#     elif attack_type.lower() == 'pgd':
-#         attack = torchattacks.PGD(model, eps=epsilon, alpha=alpha, steps=num_iter)
-#     else:
-#         raise ValueError(f"Unsupported attack type: {attack_type}. Choose 'fgsm' or 'pgd'.")
-
-#     for epoch in range(1, num_epochs + 1):
-#         model.train()
-#         running_loss = 0.0
-#         epoch_time = time.time()
-        
-#         # Use tqdm for progress bar
-#         with tqdm(total=len(trainloader), desc=f'Epoch {epoch}/{num_epochs}', unit='batch') as pbar:
-#             for batch_idx, data in enumerate(trainloader, 0):
-#                 # Get the inputs and labels
-#                 inputs, labels = data
-                
-#                 # Apply Kornia augmentations if provided
-#                 if kornia_aug is None:
-#                     inputs = inputs.to(device)
-#                 else:
-#                     inputs = kornia_aug(inputs).to(device)
-#                 labels = labels.to(device)
-
-#                 optimizer.zero_grad()
-
-#                 # Clean forward pass
-#                 clean_outputs = model(inputs)
-#                 clean_loss = criterion(clean_outputs, labels)
-                
-#                 # Generate adversarial examples using the torchattacks package
-#                 adv_inputs = attack(inputs, labels)
-
-#                 # Forward pass on adversarial examples
-#                 adv_outputs = model(adv_inputs)
-#                 adv_loss = criterion(adv_outputs, labels)
-
-#                 # Combine losses from clean and adversarial examples using adv_weight
-#                 loss = (1 - adv_weight) * clean_loss + adv_weight * adv_loss
-#                 loss.backward()
-#                 optimizer.step()
-
-#                 running_loss += loss.data.item()
-#                 pbar.update(1)  # Update progress bar
-
-#             # Normalize the loss
-#             running_loss /= len(trainloader)
-#             epoch_losses.append(running_loss)
-
-#             # Calculate training accuracy
-#             train_accuracy = calculate_accuracy(model, trainloader, device)
-
-#             # Log the epoch statistics
-#             epoch_time = time.time() - epoch_time
-#             log_epoch(epoch, running_loss, train_accuracy, epoch_time)
-        
-#             # Save the model every 5 epochs
-#             if epoch % 5 == 0:
-#                 print('==> Saving model ...')
-#                 state = {
-#                     'net': model.state_dict(),
-#                     'optimizer': optimizer.state_dict(),
-#                     'epoch': epoch,
-#                     'loss': running_loss
-#                 }
-
-#                 current_time = datetime.now().strftime("%H%M%S_%d%m%Y")  # Format: HHMMSS_DDMMYYYY
-#                 filename = f'./checkpoints/adv_attk_{model_name}_{current_time}.pth'
-
-#                 if not os.path.isdir('checkpoints'):
-#                     os.mkdir('checkpoints')
-
-#                 torch.save(state, filename)
-#                 print(f'Saved as {filename}')
-
-#     return epoch_losses
+    return epoch_train_losses, epoch_validation_losses
 
 
 def calculate_accuracy_attack(model, dataloader, device, attack_type, epsilon, alpha=None, num_iter=None):
