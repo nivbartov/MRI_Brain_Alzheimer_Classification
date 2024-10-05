@@ -276,7 +276,7 @@ def load_and_display_image(model_name, asset_name):
     display(img)
     
 
-def plot_loss_curve(epoch_train_losses, epoch_validation_losses, num_epochs):
+def plot_loss_curve(epoch_train_losses, epoch_validation_losses, num_epochs, model_name):
     plt.figure(figsize=(5, 5))
     
     # Plot training loss
@@ -296,14 +296,20 @@ def plot_loss_curve(epoch_train_losses, epoch_validation_losses, num_epochs):
 
     # Add legend
     plt.legend(loc='upper right')
-
+    
     # Show the plot
     plt.tight_layout()
     plt.show()
     
+    # Create the directory to save the confusion matrix if it doesn't exist
+    save_dir = os.path.join('assets', f'{model_name}')
+    os.makedirs(save_dir, exist_ok=True)
+    
+    plt.savefig(os.path.join(save_dir, 'plot_loss_curve.png'))
     
     
-def plot_accuracy_curve(epoch_train_accuracies, epoch_validation_accuracies, num_epochs):
+    
+def plot_accuracy_curve(epoch_train_accuracies, epoch_validation_accuracies, num_epochs, model_name):
     plt.figure(figsize=(5, 5))
     
     # Plot training accuracy
@@ -327,6 +333,12 @@ def plot_accuracy_curve(epoch_train_accuracies, epoch_validation_accuracies, num
     # Show the plot
     plt.tight_layout()
     plt.show() 
+    
+    # Create the directory to save the confusion matrix if it doesn't exist
+    save_dir = os.path.join('assets', f'{model_name}')
+    os.makedirs(save_dir, exist_ok=True)
+    
+    plt.savefig(os.path.join(save_dir, 'plot_loss_curve.png'))
     
     
 def extract_features(model, dataloader, device):
