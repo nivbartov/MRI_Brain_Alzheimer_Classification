@@ -338,7 +338,7 @@ def plot_accuracy_curve(epoch_train_accuracies, epoch_validation_accuracies, num
     save_dir = os.path.join('assets', f'{model_name}')
     os.makedirs(save_dir, exist_ok=True)
     
-    plt.savefig(os.path.join(save_dir, 'plot_loss_curve.png'))
+    plt.savefig(os.path.join(save_dir, 'plot_accuracy_curve.png'))
     
     
 def extract_features(model, dataloader, device):
