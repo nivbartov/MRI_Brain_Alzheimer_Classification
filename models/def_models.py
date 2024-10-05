@@ -51,7 +51,7 @@ class Efficientnet_B4_FT(nn.Module):
         self.efficientnet_backbone = copy.deepcopy(efficientnet_backbone)
 
         # EfficientNet-B4 typically outputs features of size 1792
-        in_features = 1792
+        in_features = 1000
 
         self.fc = nn.Sequential(
             nn.Linear(in_features, 2048),
