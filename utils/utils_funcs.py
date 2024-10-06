@@ -25,6 +25,9 @@ from tqdm import tqdm
 from PIL import Image
 from IPython.display import display
 from sklearn.decomposition import PCA
+from torchcam.methods import SmoothGradCAMpp
+from torchvision.transforms import ToPILImage
+from torchcam.methods import CAM
 
 
 
@@ -114,6 +117,7 @@ def save_model(model, optimizer, epoch, train_epoch_losses, validation_epoch_los
 
 def calculate_accuracy(model, dataloader, device):
     model.eval()
+    model.zero_grad = True
     total_correct = 0
     total_images = 0
     with torch.no_grad():
@@ -297,15 +301,14 @@ def plot_loss_curve(epoch_train_losses, epoch_validation_losses, num_epochs, mod
     # Add legend
     plt.legend(loc='upper right')
     
+    # Save the plot before showing it
+    save_dir = os.path.join('assets', f'{model_name}')
+    os.makedirs(save_dir, exist_ok=True)
+    plt.savefig(os.path.join(save_dir, 'plot_loss_curve.png'))
+
     # Show the plot
     plt.tight_layout()
     plt.show()
-    
-    # Create the directory to save the confusion matrix if it doesn't exist
-    save_dir = os.path.join('assets', f'{model_name}')
-    os.makedirs(save_dir, exist_ok=True)
-    
-    plt.savefig(os.path.join(save_dir, 'plot_loss_curve.png'))
     
     
     
@@ -329,16 +332,18 @@ def plot_accuracy_curve(epoch_train_accuracies, epoch_validation_accuracies, num
 
     # Add legend
     plt.legend(loc='lower right')
-
-    # Show the plot
-    plt.tight_layout()
-    plt.show() 
     
     # Create the directory to save the confusion matrix if it doesn't exist
     save_dir = os.path.join('assets', f'{model_name}')
     os.makedirs(save_dir, exist_ok=True)
     
     plt.savefig(os.path.join(save_dir, 'plot_accuracy_curve.png'))
+
+    # Show the plot
+    plt.tight_layout()
+    plt.show() 
+    
+
     
     
 def extract_features(model, dataloader, device):
@@ -389,12 +394,12 @@ def apply_transformations(dataset, transform):
         processed_data.append((img, label))
     return processed_data
 
-def print_accuracy_table(epsilons, accuracies):
+def print_accuracy_table(epsilons, accuracies, parameter_type):
     # Create a PrettyTable object
     table = PrettyTable()
 
     # Add columns
-    table.field_names = ["Epsilon", "Accuracy"]
+    table.field_names = [parameter_type, "Accuracy"]
     for eps, acc in zip(epsilons, accuracies):
         table.add_row([eps, f"{acc:.4f}%"])
 
@@ -443,7 +448,7 @@ def plot_normalized_confusion_matrix(testloader, model, class_names, device, mod
     disp.plot(cmap=plt.cm.Blues, values_format=".2f")
 
     # Adjust title and labels
-    plt.title(f'Normalized Confusion Matrix of {model_name} model', fontsize=16, pad=20)
+    plt.title(f'Normalized Confusion Matrix', fontsize=16, pad=20)
     plt.xlabel('Predicted label', fontsize=14)
     plt.ylabel('True label', fontsize=14)
 
@@ -517,18 +522,21 @@ def test_single_point_attack(model, device, testloader, attack_type, epsilon, al
 
 
 
-def plot_adversarial_examples(epsilons, examples, figsize=(12, 15)):
+def plot_adversarial_examples(parameter, examples, attack_name, parameter_type, figsize=(12, 15)):
     cnt = 0
     plt.figure(figsize=figsize)  # Set the figure size
+    
+    # Add a header title for the attack name
+    plt.suptitle(f"Adversarial Examples under {attack_name} Attack", fontsize=16, fontweight='bold', y=0.95)
 
-    for i in range(1, len(epsilons)):  # Start from the second epsilon
+    for i in range(1, len(parameter)):  # Start from the second epsilon
         for j in range(len(examples[i])):
             cnt += 1
-            plt.subplot(len(epsilons) - 1, len(examples[0]), cnt)  # Adjust for i starting from 1
+            plt.subplot(len(parameter) - 1, len(examples[0]), cnt)  # Adjust for i starting from 1
             plt.xticks([], [])
             plt.yticks([], [])
             if j == 0:
-                plt.ylabel(f"Eps: {epsilons[i]}", fontsize=14)
+                plt.ylabel(f"{parameter_type}: {parameter[i]}", fontsize=14)
                 
             orig, adv, ex = examples[i][j]  # Unpack the original and adversarial examples
             
@@ -540,8 +548,9 @@ def plot_adversarial_examples(epsilons, examples, figsize=(12, 15)):
 
     # Adjust spacing to prevent overlap between subplots
     plt.tight_layout(pad=2.0)
-    plt.subplots_adjust(hspace=0.4, wspace=0.2)  # Increase space between subplots
+    plt.subplots_adjust(top=0.9, hspace=0.4, wspace=0.2)  # Increase space between subplots
     plt.show()
+
 
 def adversarial_train_epoch(model, trainloader, device, criterion, optimizer, attack, adv_weight, kornia_aug=None, use_amp=False):
     model.train()
@@ -593,7 +602,7 @@ def adversarial_train_epoch(model, trainloader, device, criterion, optimizer, at
     return train_loss, train_accuracy
 
 
-def adversarial_validation_epoch(model, validationloader, device, criterion, kornia_aug=None, use_amp=False):
+def adversarial_validation_epoch(model, validationloader, device, criterion, attack, kornia_aug=None, use_amp=False):
     model.eval()
     validation_loss = 0.0
     correct = 0
@@ -608,8 +617,13 @@ def adversarial_validation_epoch(model, validationloader, device, criterion, kor
                 inputs = kornia_aug(inputs).to(device)
             labels = labels.to(device)
 
+            # Mixed precision with autocast
             with autocast(enabled=use_amp):
-                outputs = model(inputs)
+                # Generate adversarial examples
+                adv_inputs = attack(inputs, labels)
+
+                # Forward pass on adversarial examples
+                outputs = model(adv_inputs)
                 loss = criterion(outputs, labels)
 
             validation_loss += loss.item()
@@ -622,12 +636,16 @@ def adversarial_validation_epoch(model, validationloader, device, criterion, kor
 
     return validation_loss, validation_accuracy
 
-def adversarial_train_model(model, num_epochs, trainloader, validationloader, device, criterion, optimizer, attack_type='fgsm',
-                      epsilon=0.03, adv_weight=0.5, alpha=0.01, num_iter=10, kornia_aug=None, use_amp=False):
+def adversarial_train_model(model, num_epochs, trainloader, validationloader, device, criterion, optimizer, 
+                            attack_type='fgsm', epsilon=0.03, adv_weight=0.5, alpha=0.01, num_iter=10, 
+                            kornia_aug=None, use_amp=False, scheduler=None):
+    
     epoch_train_losses = []
     epoch_validation_losses = []
-    
-    model_name = type(model).__name__
+    epoch_train_accuracies = []  # Store train accuracies
+    epoch_validation_accuracies = []  # Store validation accuracies
+
+    model_name = type(model).__name__ + '_atk'
     print(f"Adversarial Training model: {model_name} on {device} with {attack_type.upper()} attack and adversarial weight {adv_weight}")
 
     # Initialize the attack based on the attack_type
@@ -645,12 +663,16 @@ def adversarial_train_model(model, num_epochs, trainloader, validationloader, de
         epoch_time = time.time()
 
         # Training phase
-        train_loss, train_accuracy = adversarial_train_epoch(model, trainloader, device, criterion, optimizer, attack, adv_weight, kornia_aug, use_amp)
+        train_loss, train_accuracy = adversarial_train_epoch(
+            model, trainloader, device, criterion, optimizer, attack, adv_weight, kornia_aug, use_amp)
         epoch_train_losses.append(train_loss)
+        epoch_train_accuracies.append(train_accuracy)  # Save train accuracy
 
         # Validation phase
-        validation_loss, validation_accuracy = adversarial_validation_epoch(model, validationloader, device, criterion, kornia_aug, use_amp)
+        validation_loss, validation_accuracy = adversarial_validation_epoch(
+            model, validationloader, device, criterion, kornia_aug, use_amp)
         epoch_validation_losses.append(validation_loss)
+        epoch_validation_accuracies.append(validation_accuracy)  # Save validation accuracy
 
         # Log the epoch statistics
         epoch_time = time.time() - epoch_time
@@ -664,13 +686,20 @@ def adversarial_train_model(model, num_epochs, trainloader, validationloader, de
                 epoch,
                 epoch_train_losses,
                 epoch_validation_losses,
+                epoch_train_accuracies,  # Pass train accuracies to save_model
+                epoch_validation_accuracies,  # Pass validation accuracies to save_model
                 model_name,
                 train_loss,
                 validation_loss,
-                session_dir
+                session_dir  # Pass the session directory to save_model
             )
 
-    return epoch_train_losses, epoch_validation_losses
+        # Step the scheduler after each epoch if provided
+        if scheduler:
+            scheduler.step()
+
+    return epoch_train_losses, epoch_validation_losses, epoch_train_accuracies, epoch_validation_accuracies
+
 
 
 def calculate_accuracy_attack(model, dataloader, device, attack_type, epsilon, alpha=None, num_iter=None):
