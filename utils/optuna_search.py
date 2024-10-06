@@ -2,6 +2,7 @@ import sys
 import os
 import torch
 import torch.nn as nn
+import torchvision
 from tqdm import tqdm
 from functools import partial
 import optuna
