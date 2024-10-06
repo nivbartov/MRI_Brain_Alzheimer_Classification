@@ -33,6 +33,7 @@ dependencies:
       - cuml-cu11
       - prettytable
       - pickleshare
+      - torchcam
       - torchattacks # recommended PyTorch version >=1.4.0 , Python version >=3.6
       - "xformers"  # Installing xformers from the CUDA 12.4 index
     # PIP options for additional PyTorch and NVIDIA dependencies

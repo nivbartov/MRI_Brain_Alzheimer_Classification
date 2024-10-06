@@ -79,7 +79,7 @@ class Efficientnet_B4_FT(nn.Module):
 
     def forward(self, x):
         x = self.efficientnet_backbone(x)
-        x = x.view(x.size(0), -1)
+        # x = x.view(x.size(0), -1)
         x = self.fc(x)
         return x
 
