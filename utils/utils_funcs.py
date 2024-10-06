@@ -29,8 +29,6 @@ from torchcam.methods import SmoothGradCAMpp
 from torchvision.transforms import ToPILImage
 from torchcam.methods import CAM
 
-
-
 def plot_random_images(dataset, num_imgs=20):
     # Sample random indices from the dataset
     random_indices = random.sample(range(len(dataset)), min(num_imgs, len(dataset)))
@@ -114,7 +112,6 @@ def save_model(model, optimizer, epoch, train_epoch_losses, validation_epoch_los
     torch.save(state, filename)
     print(f'Saved as {filename}')
 
-
 def calculate_accuracy(model, dataloader, device):
     model.eval()
     model.zero_grad = True
@@ -132,7 +129,6 @@ def calculate_accuracy(model, dataloader, device):
 
     model_accuracy = total_correct / total_images * 100
     return model_accuracy
-
 
 def log_epoch(epoch, train_loss, train_accuracy, validation_loss, validation_accuracy, epoch_time):
     """Logs the statistics for the current epoch."""
@@ -183,7 +179,6 @@ def train_epoch(model, trainloader, device, criterion, optimizer, kornia_aug=Non
 
     return train_loss, train_accuracy
 
-
 def validate_epoch(model, validationloader, device, criterion, kornia_aug=None, use_amp=False):
     model.eval()
     validation_loss = 0.0
@@ -207,7 +202,6 @@ def validate_epoch(model, validationloader, device, criterion, kornia_aug=None, 
     validation_accuracy = calculate_accuracy(model, validationloader, device)
 
     return validation_loss, validation_accuracy
-
 
 def train_model(model, num_epochs, trainloader, validationloader, device, criterion, optimizer, scheduler, kornia_aug=None, use_amp=False):
     epoch_train_losses = []
@@ -259,8 +253,6 @@ def train_model(model, num_epochs, trainloader, validationloader, device, criter
 
     return epoch_train_losses, epoch_validation_losses, epoch_train_accuracies, epoch_validation_accuracies
 
-
-
 def open_nvitop():
     try:
         # Open a new cmd window and run 'nvitop -m' command for GPU monitoring
@@ -278,7 +270,6 @@ def load_and_display_image(model_name, asset_name):
     
     # Display the image inline in the notebook
     display(img)
-    
 
 def plot_loss_curve(epoch_train_losses, epoch_validation_losses, num_epochs, model_name):
     plt.figure(figsize=(5, 5))
@@ -309,9 +300,7 @@ def plot_loss_curve(epoch_train_losses, epoch_validation_losses, num_epochs, mod
     # Show the plot
     plt.tight_layout()
     plt.show()
-    
-    
-    
+
 def plot_accuracy_curve(epoch_train_accuracies, epoch_validation_accuracies, num_epochs, model_name):
     plt.figure(figsize=(5, 5))
     
@@ -342,10 +331,7 @@ def plot_accuracy_curve(epoch_train_accuracies, epoch_validation_accuracies, num
     # Show the plot
     plt.tight_layout()
     plt.show() 
-    
 
-    
-    
 def extract_features(model, dataloader, device):
     """Extract features from DINO V2 model before the fully connected layers."""
     model.eval()  # Set model to evaluation mode
@@ -384,7 +370,6 @@ def visualize_dino_tsne(model, dataloader, device, perplexity=30, learning_rate=
     features, labels = extract_features(model, dataloader, device)
     plot_tsne(features, labels, perplexity=perplexity, learning_rate=learning_rate, n_iter=n_iter)
 
-    
 def apply_transformations(dataset, transform):
     processed_data = []
     for img, label in dataset:
@@ -405,7 +390,6 @@ def print_accuracy_table(epsilons, accuracies, parameter_type):
 
     # Print the table
     print(table)
-    
 
 def load_model(model, optimizer, model_path):
     checkpoint = torch.load(model_path)
@@ -416,7 +400,6 @@ def load_model(model, optimizer, model_path):
     
     print(f"Loaded model from {model_path} (epoch: {epoch}, loss: {loss:.4f})")
     return epoch, loss
-
 
 def plot_normalized_confusion_matrix(testloader, model, class_names, device, model_name):
     model.eval()  
@@ -462,8 +445,6 @@ def plot_normalized_confusion_matrix(testloader, model, class_names, device, mod
     plt.savefig(os.path.join(save_dir, 'confusion_matrix.png'))
     plt.show()  # Display the confusion matrix in the notebook
     plt.close()  # Close the plot to free up memory
-
-
 
 def test_single_point_attack(model, device, testloader, attack_type, epsilon, alpha=None, num_iter=None):
     # Accuracy counter
@@ -520,8 +501,6 @@ def test_single_point_attack(model, device, testloader, attack_type, epsilon, al
     # Return the accuracy and adversarial examples
     return final_acc, adv_examples
 
-
-
 def plot_adversarial_examples(parameter, examples, attack_name, parameter_type, figsize=(12, 15)):
     cnt = 0
     plt.figure(figsize=figsize)  # Set the figure size
@@ -550,7 +529,6 @@ def plot_adversarial_examples(parameter, examples, attack_name, parameter_type, 
     plt.tight_layout(pad=2.0)
     plt.subplots_adjust(top=0.9, hspace=0.4, wspace=0.2)  # Increase space between subplots
     plt.show()
-
 
 def adversarial_train_epoch(model, trainloader, device, criterion, optimizer, attack, adv_weight, kornia_aug=None, use_amp=False):
     model.train()
@@ -600,7 +578,6 @@ def adversarial_train_epoch(model, trainloader, device, criterion, optimizer, at
     train_accuracy = calculate_accuracy(model, trainloader, device)
 
     return train_loss, train_accuracy
-
 
 def adversarial_validation_epoch(model, validationloader, device, criterion, attack, kornia_aug=None, use_amp=False):
     model.eval()
@@ -699,8 +676,6 @@ def adversarial_train_model(model, num_epochs, trainloader, validationloader, de
             scheduler.step()
 
     return epoch_train_losses, epoch_validation_losses, epoch_train_accuracies, epoch_validation_accuracies
-
-
 
 def calculate_accuracy_attack(model, dataloader, device, attack_type, epsilon, alpha=None, num_iter=None):
     model.eval()  # Set model to evaluation mode

@@ -37,27 +37,37 @@ def save_best_params(best_params, model_name, loss_value, base_dir='checkpoints/
 
   
 def define_model(trial, model_name, transfer_learning):
-    
-    models = ['NaiveModelAug', 'NaiveModel', 'DINO_v2_FT']
+    models = ['NaiveModelAug', 'NaiveModel', 'DINOv2', 'ResNet', 'EfficientNet']
     
     if model_name not in models:
         raise ValueError(f"Model name {model_name} is not in the list of available models: {models}")
     
-    output_channels = 4  
-
+    output_channels = 4
+    
     model_class = getattr(def_models, model_name)
     
-    if model_name == 'DINO_v2_FT':
-        # Load the DINO v2 backbone
+    if model_name == 'DINOv2':
+        # Load the DINOv2 backbone
         dino_v2_model = torch.hub.load('facebookresearch/dinov2', 'dinov2_vits14')
         
-        # Freeze the DINO v2 layers if using transfer learning
+        # Freeze the DINOv2 layers if using transfer learning
         if transfer_learning:
             for param in dino_v2_model.parameters():
                 param.requires_grad = False
         
-        # Create the DINO_v2_FT model, passing the backbone
-        model = model_class(dino_backbone=dino_v2_model, output_channels=output_channels)
+        # Create the DINOv2 model, passing the backbone
+        model = model_class(DINOv2_backbone=dino_v2_model, output_channels=output_channels)
+    elif model_name == 'ResNet':
+        # Load the ResNet backbone
+        resnet_model = torchvision.models.resnet34(pretrained=True)
+        
+        # Freeze the ResNet layers if using transfer learning
+        if transfer_learning:
+            for param in resnet_model.parameters():
+                param.requires_grad = False
+        
+        # Create the ResNet model, passing the backbone
+        model = model_class(ResNet_backbone=resnet_model, output_channels=output_channels)
     else:
         # Handle other model types (NaiveModel, NaiveModelAug) as needed
         model = model_class(input_channels=3, output_channels=output_channels)
@@ -65,8 +75,7 @@ def define_model(trial, model_name, transfer_learning):
     return model
 
 
-def objective(trial,model_name, epochs, device , loss_criterion, transfer_learning=True):
-
+def objective(trial, model_name, epochs, device, loss_criterion, transfer_learning=True):
     # Generate the model
     model = define_model(trial, model_name, transfer_learning).to(device)
     
@@ -82,11 +91,9 @@ def objective(trial,model_name, epochs, device , loss_criterion, transfer_learni
     scheduler_name = trial.suggest_categorical('scheduler', ["StepLR", "CosineAnnealingLR"])
     scheduler = StepLR(optimizer, 10, 0.1) if scheduler_name == "StepLR" else CosineAnnealingLR(optimizer, 30)
     
-
     # Get MRI dataset - load the data and shuffle it
     train_set = torch.load('dataset/dataset_variables/train_set.pt')
     validation_set = torch.load('dataset/dataset_variables/validation_set.pt')
-    
     
     # if (type(model).__name__ == 'DINO_v2_FT'):
     #     # Resize images from 128x128 to 224x224
@@ -105,7 +112,6 @@ def objective(trial,model_name, epochs, device , loss_criterion, transfer_learni
     # limit train examples
     n_train_examples = 50 * batch_size
     n_valid_examples = 15 * batch_size
-    
     
     augmentations = K.AugmentationSequential(
         K.RandomHorizontalFlip(p=0.1),
@@ -169,7 +175,7 @@ def objective(trial,model_name, epochs, device , loss_criterion, transfer_learni
 
     return accuracy
 
-def save_best_params(best_params, model_name, loss_value, base_dir='checkpoints/op_tuna_params'):
+def save_best_params(best_params, model_name, loss_value, base_dir='checkpoints/optuna_params'):
     """Save the best parameters to a structured directory."""
     # Create the base directory if it doesn't exist
     os.makedirs(base_dir, exist_ok=True)
@@ -192,11 +198,7 @@ def optuna_param_search(model_name, loss_criterion, num_epochs_for_experiments=1
     
     print(f"Optuna is done on device: {device}")
     
-    objective_with_args = partial(objective, 
-                                  model_name=model_name, 
-                                  epochs=num_epochs_for_experiments, 
-                                  device=device, 
-                                  loss_criterion=loss_criterion)
+    objective_with_args = partial(objective, model_name=model_name, epochs=num_epochs_for_experiments, device=device, loss_criterion=loss_criterion)
     
     # make the study
     sampler = optuna.samplers.TPESampler()
@@ -225,8 +227,3 @@ def optuna_param_search(model_name, loss_criterion, num_epochs_for_experiments=1
     save_best_params(trial.params, model_name, trial.value)
         
     return trial.params
-    
-
-
-
-
