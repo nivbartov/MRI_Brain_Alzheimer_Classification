@@ -48,7 +48,7 @@ class ResNet(nn.Module):
         
         self.ResNet_backbone = copy.deepcopy(ResNet_backbone)
         
-        in_features = 384 # Retrieve in_features from the original head
+        in_features = 1000 # Retrieve in_features from the original head
         
         self.fc = nn.Sequential(
             nn.Linear(in_features, 2048),
