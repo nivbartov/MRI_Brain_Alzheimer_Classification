@@ -69,6 +69,17 @@ def define_model(trial, model_name, transfer_learning):
         
         # Create the ResNet model, passing the backbone
         model = model_class(ResNet_backbone=resnet_model, output_channels=output_channels)
+    elif model_name == 'EfficientNet':
+        # Load the ResNet backbone
+        resnet_model = torchvision.models.efficientnet_b4(pretrained=True)
+        
+        # Freeze the ResNet layers if using transfer learning
+        if transfer_learning:
+            for param in resnet_model.parameters():
+                param.requires_grad = False
+        
+        # Create the ResNet model, passing the backbone
+        model = model_class(EfficientNet_backbone=resnet_model, output_channels=output_channels)
     else:
         # Handle other model types (NaiveModel, NaiveModelAug) as needed
         model = model_class(input_channels=3, output_channels=output_channels)
@@ -204,7 +215,7 @@ def optuna_param_search(model_name, loss_criterion, num_epochs_for_experiments=1
     # make the study
     sampler = optuna.samplers.TPESampler()
     study = optuna.create_study(study_name="mri-alzhimer-classification", direction="maximize", sampler=sampler)
-    study.optimize(objective_with_args, n_trials=25)
+    study.optimize(objective_with_args, n_trials=30)
 
     # get the purned and completed trials
     pruned_trials = [t for t in study.trials if t.state == optuna.trial.TrialState.PRUNED]
