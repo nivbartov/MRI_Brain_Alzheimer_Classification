@@ -98,7 +98,7 @@ def objective(trial, model_name, epochs, device, loss_criterion, transfer_learni
     optimizer_name = trial.suggest_categorical("optimizer", ["Adam", "RMSprop", "SGD"])
     optimizer = getattr(optim, optimizer_name)(model.parameters(), lr=lr)
     # batch size
-    batch_size = trial.suggest_categorical('batch_size', [16,32,64])
+    batch_size = trial.suggest_categorical('batch_size', [16,32,64,128,256])
     # scheduler
     scheduler_name = trial.suggest_categorical('scheduler', ["StepLR", "CosineAnnealingLR"])
     scheduler = StepLR(optimizer, 10, 0.1) if scheduler_name == "StepLR" else CosineAnnealingLR(optimizer, 30)
@@ -215,7 +215,7 @@ def optuna_param_search(model_name, loss_criterion, num_epochs_for_experiments=1
     # make the study
     sampler = optuna.samplers.TPESampler()
     study = optuna.create_study(study_name="mri-alzhimer-classification", direction="maximize", sampler=sampler)
-    study.optimize(objective_with_args, n_trials=30)
+    study.optimize(objective_with_args, n_trials=60)
 
     # get the purned and completed trials
     pruned_trials = [t for t in study.trials if t.state == optuna.trial.TrialState.PRUNED]
