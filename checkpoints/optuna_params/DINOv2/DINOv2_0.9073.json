@@ -1,0 +1,6 @@
+{
+    "lr": 6.917436540093293e-05,
+    "optimizer": "Adam",
+    "batch_size": 64,
+    "scheduler": "CosineAnnealingLR"
+}
