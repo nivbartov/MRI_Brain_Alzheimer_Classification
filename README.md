@@ -5,8 +5,11 @@
   <img src="assets/icons/main_image_readme.jpg" height="300">
 </h1>
 
-<p><strong>This project is a part of the EE046211 Deep Learning course at the Technion.</strong></p>
+<div align="center">
+    <p><strong>This project is a part of the EE046211 Deep Learning course at the Technion.</strong></p>
 </div>
+
+
 
 
 <h4 align="center">
