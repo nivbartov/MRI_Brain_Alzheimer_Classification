@@ -1,10 +1,13 @@
-## MRI Brain Alzheimer Classification Under Advarsarial Attacks
+<h1 align="center">MRI Brain Alzheimer Classification Under Adversarial Attacks</h1>
 
-<h1 align="center">
-  <img src="assets/icons/mri_main_readme.jpg" height="300">
+<div style="text-align: center;">
+<h1>
+  <img src="assets/icons/mri_main_readme.jpeg" height="300">
 </h1>
 
-<p align="center"><strong>This project is a part of the EE046211 Deep Learning course at the Technion.</strong></p>
+<p><strong>This project is a part of the EE046211 Deep Learning course at the Technion.</strong></p>
+</div>
+
 
 <h4 align="center">
     Dor Lerman:
@@ -19,9 +22,8 @@
 </h4>
 
 
-
 <h4 align="center">
-    <a href="https://colab.research.google.com/github/taldatech/ee046211-deep-learning"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
+    <a href="https://colab.research.google.com/...."><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
     <a href="https://www.youtube.com/watch?v=YOUR_VIDEO_ID" target="_blank"><img src="https://img.shields.io/badge/Watch%20Video-YouTube-red?logo=youtube" alt="Watch Video on YouTube"/></a>
 </h4>
 
