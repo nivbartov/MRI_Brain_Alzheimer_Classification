@@ -1,6 +1,0 @@
-{
-    "lr": 7.418428708086175e-05,
-    "optimizer": "RMSprop",
-    "batch_size": 256,
-    "scheduler": "CosineAnnealingLR"
-}
