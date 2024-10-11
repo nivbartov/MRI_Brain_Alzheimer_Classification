@@ -1,0 +1,36 @@
+# Basic packages
+matplotlib
+notebook
+numpy
+opencv-python
+pandas
+plotly
+scikit-learn
+scipy
+seaborn
+tqdm
+jupyter
+ipywidgets
+
+# PyTorch packages
+torch==1.13.0  # Specify the desired version
+torchvision==0.14.0  # Specify the desired version
+
+# Other dependencies
+optuna
+omegaconf
+torchmetrics
+fvcore
+iopath
+submitit
+kornia
+cuml-cu11
+prettytable
+pickleshare
+torchcam
+torchattacks
+
+# Optional - PyTorch and NVIDIA dependencies from additional indexes
+# Note: These should typically be installed using conda, but if you prefer pip:
+--extra-index-url https://download.pytorch.org/whl/cu124
+--extra-index-url https://pypi.nvidia.com
