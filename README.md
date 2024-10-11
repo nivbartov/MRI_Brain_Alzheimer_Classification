@@ -45,15 +45,13 @@
 - [License](#license)
 
 ## Project Overview
-In the cyber security world, efforts are made to protect computing systems from digital attacks which are an emerging thread nowadays. In machine learning, attackers use Adversarial machine learning, which is a technique that tries to fool the models with deceptive data. This data is inserted into the models as an input and decieves the classifiers to misclassify.
+In the cyber security world, efforts are made to protect computing systems from digital attacks which are an emerging thread nowadays. In machine learning, attackers employ Adversarial machine learning, a method designed to trick models using decieving data. This deceptive data is fed into the models as input, causing classifiers to make incorrect classifications.
 We saw that in [reference [1]](https://arxiv.org/abs/1907.10456), medical images are vulnerable to adversarial attacks.
-Recognizing this vulnerability emphasizes the need for a stronger model resilience.
+Acknowledging this vulnerability emphasizes the importance of enhancing the model's resilience.
 
 In this project we try to make a robust model while achiving the two main goals :
 1. defend against adverserial attacks in medical images , particularly in MRI alzhiemer classification. Meaning, whenever the model is under attack, it will still generalize and perform well.
 2. Generalize well in the main classification task of the severity of the alziehmer disease.
-
-In order to achieve our goals, we followed these steps:
 
 In order to achieve our goals, we followed these steps:
 
