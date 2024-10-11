@@ -28,6 +28,7 @@ from sklearn.decomposition import PCA
 from torchcam.methods import SmoothGradCAMpp
 from torchvision.transforms import ToPILImage
 from torchcam.methods import CAM
+from collections import Counter
 
 def plot_random_images(dataset, num_imgs=20):
     # Sample random indices from the dataset
@@ -71,6 +72,21 @@ def plot_random_images(dataset, num_imgs=20):
     plt.tight_layout()
     plt.subplots_adjust(top=0.85)  # Adjust space to fit legend above the images
     plt.show()
+
+def calculate_statistics(dataset, set_name):
+    # Assuming each item in the dataset is a tuple (image, label)
+    labels = [label for _, label in dataset]
+    total_images = len(labels)
+    
+    # Count occurrences of each class
+    class_counts = Counter(labels)
+    
+    # Print statistics
+    print(f"\n{set_name} Statistics:")
+    print(f"Total images: {total_images}")
+    for cls, count in class_counts.items():
+        print(f"Class {cls}: {count} images ({(count / total_images) * 100:.2f}%)")
+
 
 def create_training_session(model_name):
     """Create a training session directory for saving model checkpoints and logs."""
@@ -530,7 +546,8 @@ def plot_adversarial_examples(parameter, examples, attack_name, parameter_type, 
     plt.subplots_adjust(top=0.9, hspace=0.4, wspace=0.2)  # Increase space between subplots
     plt.show()
 
-def adversarial_train_epoch(model, trainloader, device, criterion, optimizer, attack, adv_weight, kornia_aug=None, use_amp=False):
+def adversarial_train_epoch(model, trainloader, device, criterion, optimizer,
+                            attack, adv_weight, kornia_aug=None, use_amp=False):
     model.train()
     train_loss = 0.0
     
@@ -585,28 +602,34 @@ def adversarial_validation_epoch(model, validationloader, device, criterion, att
     correct = 0
     total = 0
 
-    with torch.no_grad():
-        for data in tqdm(validationloader, desc='Validating'):
-            inputs, labels = data
-            if kornia_aug is None:
-                inputs = inputs.to(device)
-            else:
-                inputs = kornia_aug(inputs).to(device)
-            labels = labels.to(device)
 
-            # Mixed precision with autocast
-            with autocast(enabled=use_amp):
-                # Generate adversarial examples
-                adv_inputs = attack(inputs, labels)
+    for data in tqdm(validationloader, desc='Validating'):
+        inputs, labels = data
+        if kornia_aug is None:
+            inputs = inputs.to(device)
+        else:
+            inputs = kornia_aug(inputs).to(device)
+        labels = labels.to(device)
 
+        # Enable gradient computation for adversarial example generation
+        inputs.requires_grad = True
+        
+        with autocast(enabled=use_amp):
+            # Generate adversarial examples
+            adv_inputs = attack(inputs, labels)
+
+            with torch.no_grad():
                 # Forward pass on adversarial examples
                 outputs = model(adv_inputs)
                 loss = criterion(outputs, labels)
 
-            validation_loss += loss.item()
-            _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
+        validation_loss += loss.item()
+        _, predicted = torch.max(outputs.data, 1)
+        total += labels.size(0)
+        correct += (predicted == labels).sum().item()
+
+        # Turn off requires_grad after adversarial attack generation
+        inputs.requires_grad = False
 
     validation_loss /= len(validationloader)
     validation_accuracy = 100 * correct / total
@@ -647,7 +670,7 @@ def adversarial_train_model(model, num_epochs, trainloader, validationloader, de
 
         # Validation phase
         validation_loss, validation_accuracy = adversarial_validation_epoch(
-            model, validationloader, device, criterion, kornia_aug, use_amp)
+            model, validationloader, device, criterion, attack, kornia_aug, use_amp)
         epoch_validation_losses.append(validation_loss)
         epoch_validation_accuracies.append(validation_accuracy)  # Save validation accuracy
 

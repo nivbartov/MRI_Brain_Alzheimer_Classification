@@ -93,37 +93,26 @@ def objective(trial, model_name, epochs, device, loss_criterion, transfer_learni
     
     # Hyperparameters to experiment : learning rate, optimizer, batch size
     # learning rate
-    lr = trial.suggest_float("lr", 1e-6, 1e-3, log=True)  # log=True, will use log scale to interplolate between lr
+    lr = trial.suggest_float("lr", 1e-6, 1e-2, log=True)  # log=True, will use log scale to interplolate between lr
     # optimizer
     optimizer_name = trial.suggest_categorical("optimizer", ["Adam", "RMSprop", "SGD"])
     optimizer = getattr(optim, optimizer_name)(model.parameters(), lr=lr)
     # batch size
-    batch_size = trial.suggest_categorical('batch_size', [16,32,64])
+    batch_size = trial.suggest_categorical('batch_size', [16,32,64,128,256])
     # scheduler
     scheduler_name = trial.suggest_categorical('scheduler', ["StepLR", "CosineAnnealingLR"])
     scheduler = StepLR(optimizer, 10, 0.1) if scheduler_name == "StepLR" else CosineAnnealingLR(optimizer, 30)
     
+    
     # Get MRI dataset - load the data and shuffle it
     train_set = torch.load('dataset/dataset_variables/train_set.pt')
     validation_set = torch.load('dataset/dataset_variables/validation_set.pt')
-    
-    # if (type(model).__name__ == 'DINO_v2_FT'):
-    #     # Resize images from 128x128 to 224x224
-    #     preprocess = transforms.Compose([
-    #         transforms.Resize((224, 224)), 
-    #         transforms.ToTensor()
-    #     ])
-
-    #     # Apply transformations to the datasets
-    #     train_set = utils_funcs.apply_transformations(train_set, preprocess)
-    #     validation_set = utils_funcs.apply_transformations(validation_set, preprocess)
-    
     trainloader = torch.utils.data.DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=3)
     validloader = torch.utils.data.DataLoader(validation_set, batch_size=batch_size, shuffle=False, num_workers=3)
     
     # limit train examples
-    n_train_examples = 50 * batch_size
-    n_valid_examples = 15 * batch_size
+    n_train_examples = 25 * batch_size
+    n_valid_examples = 10 * batch_size
     
     augmentations = K.AugmentationSequential(
         K.RandomHorizontalFlip(p=0.1),
@@ -147,7 +136,7 @@ def objective(trial, model_name, epochs, device, loss_criterion, transfer_learni
                 break
             
             inputs = augmentations(inputs).to(device)
-            labels = labels.to(device)
+            labels = labels.to(device)  # Flatten to 1D if needed
 
             output_vals = model.forward(inputs)
             
@@ -215,7 +204,7 @@ def optuna_param_search(model_name, loss_criterion, num_epochs_for_experiments=1
     # make the study
     sampler = optuna.samplers.TPESampler()
     study = optuna.create_study(study_name="mri-alzhimer-classification", direction="maximize", sampler=sampler)
-    study.optimize(objective_with_args, n_trials=30)
+    study.optimize(objective_with_args, n_trials=40)
 
     # get the purned and completed trials
     pruned_trials = [t for t in study.trials if t.state == optuna.trial.TrialState.PRUNED]
