@@ -1,15 +1,12 @@
 <h1 align="center">MRI Brain Alzheimer Classification Under Adversarial Attacks</h1>
 
-<div style="text-align: center;">
-<h1>
+<h1 align="center">
   <img src="assets/icons/main_image_readme.jpg" height="300">
 </h1>
 
 <div align="center">
     <p><strong>This project is a part of the EE046211 Deep Learning course at the Technion.</strong></p>
 </div>
-
-
 
 
 <h4 align="center">
