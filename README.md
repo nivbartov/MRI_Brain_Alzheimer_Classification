@@ -1,37 +1,30 @@
-# ee046211-deep-learning
+## MRI Brain Alzheimer Classification Under Advarsarial Attacks
 
 <h1 align="center">
-  <br>
-MRI Brain Alzheimer Classification Under Advarsarial Attacks
-  <br>
   <img src="assets/icons/mri_main_readme.jpg" height="300">
 </h1>
 
+This project is a part the EE046211 Deep Learning course at the Technion
+
 <h4 align="center">
     Dor Lerman:
-  
-  <a href="https://www.linkedin.com/in/..."><img src="assets/icons/Linkedin_icon_readme.png" width="40" height="40"/></a>
-    <a href="https://github.com/...."><img src="assets/icons/GitHub_icon_readme.png" width="40" height="40"/></a>
-</a>
+    <a href="https://www.linkedin.com/in/..."><img src="assets/icons/Linkedin_icon_readme.png" width="30" height="30"/></a>
+    <a href="https://github.com/..."><img src="assets/icons/GitHub_icon_readme.png" width="30" height="30"/></a>
+</h4>
 
 <h4 align="center">
     Niv Bar-Tov:
-  
-  <a href="https://www.linkedin.com/in/..."><img src="assets/icons/Linkedin_icon_readme.png" width="40" height="40"/></a>
-    <a href="https://github.com/....."><img src="assets/icons/GitHub_icon_readme.png" width="40" height="40"/></a>
-</a>
+    <a href="https://www.linkedin.com/in/..."><img src="assets/icons/Linkedin_icon_readme.png" width="30" height="30"/></a>
+    <a href="https://github.com/..."><img src="assets/icons/GitHub_icon_readme.png" width="30" height="30"/></a>
+</h4>
 
-Alzhiemer classification task
+
 
 <h4 align="center">
     <a href="https://colab.research.google.com/github/taldatech/ee046211-deep-learning"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
-    <a href="https://nbviewer.jupyter.org/github/taldatech/ee046211-deep-learning/tree/main/"><img src="https://raw.githubusercontent.com/taldatech/ee046211-deep-learning/main/assets/nbviewer_badge.svg" alt="Open In NBViewer"/></a>
-    <a href="https://mybinder.org/v2/gh/taldatech/ee046211-deep-learning/main"><img src="https://mybinder.org/badge_logo.svg" alt="Open In Binder"/></a>
-
+    <a href="https://www.youtube.com/watch?v=YOUR_VIDEO_ID" target="_blank"><img src="https://img.shields.io/badge/Watch%20Video-YouTube-red?logo=youtube" alt="Watch Video on YouTube"/></a>
 </h4>
-<p align="center">
-    <a href="https://taldatech.github.io/ee046211-deep-learning/">Student Projects Website</a> • <a href="https://www.youtube.com/playlist?list=PLy3Xsl9jz-9WBHO850WFxv2TB5qtAlk0r">Video Tutorials (Winter 2024)</a>
-  </p>
+
 
 
 ## Table of Contents
@@ -45,6 +38,7 @@ Alzhiemer classification task
 - [Usage](#usage)
 - [Future Work](#future-work)
 - [Sources and References](#sources-and-references)
+- [Citation](#citation)
 - [License](#license)
 
 
@@ -114,9 +108,10 @@ MRI_Brain_Alzheimer_Classification/
 ```
 
 
+
 ## Installation
 
-This code works with any OS - linux or windows. To setup all the required dependencies plesae follow the instructions below:
+This code works with any OS — Linux or Windows. To set up all the required dependencies, please follow one of the instructions below:
 
 #### Conda
 
@@ -205,6 +200,7 @@ We can also use a multi-modal data such as PET and CT scans.
 
 5. Tajbakhsh, N., Shin, J., Gurudu, S. R., & Hurst, R. T. (2022). What makes transfer learning work for medical images: Feature reuse & other factors. [arXiv:2203.01825](https://arxiv.org/abs/2203.01825)
 
+## Citation
 
 
 ## License
