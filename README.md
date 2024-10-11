@@ -4,7 +4,7 @@
   <img src="assets/icons/mri_main_readme.jpg" height="300">
 </h1>
 
-This project is a part the EE046211 Deep Learning course at the Technion
+<p align="center"><strong>This project is a part of the EE046211 Deep Learning course at the Technion.</strong></p>
 
 <h4 align="center">
     Dor Lerman:
@@ -31,6 +31,7 @@ This project is a part the EE046211 Deep Learning course at the Technion
 
 - [Project Overview](#project-overview)
 - [Project Structure](#Project-Structure)
+- [Files In The Repository](#files-in-the-repository)
 - [Installation](#installation)
 - [Data](#data)
 - [Model](#model)
@@ -107,6 +108,28 @@ MRI_Brain_Alzheimer_Classification/
     └── grad_cam.py
 ```
 
+| Directory Name | Content |
+|----------------|---------|
+| `assets` | Contains images for each model, including confusion matrices, loss curves, and accuracy curves. These curves display both training and validation data. |
+| `checkpoints` | Includes the Optuna best parameters directory and all trained model checkpoints. This directory is organized by model type and includes both standard and adversarially trained versions. |
+| `dataset` | Contains two subdirectories: `raw_dataset` with the original data, and `dataset_variables` with preprocessed datasets split into training, validation, and test sets. |
+| `env` | Holds the project environment configuration file (`project_env.yaml`) and requirements files for setting up dependencies with different installation methods. |
+| `models` | Contains all models organized by backbone type. Each model has a version with adversarial training (suffix `_atk`). Also includes a `results.ipynb` notebook that compiles all results. |
+| `utils` | Houses utility scripts, including `optuna_search.py` for hyperparameter optimization, `utils_funcs.py` with general helper functions, and `grad_cam.py` for generating Grad-CAM visualizations. |
+
+## Files In The Repository
+
+| File Name | Description |
+|-----------|-------------|
+| `dataset/dataset_variables/*_set.pt` | Contains saved dataset splits: `train_set.pt`, `validation_set.pt`, and `test_set.pt`, created by `prepare_dataset.ipynb`. |
+| `dataset/prepare_dataset.ipynb` | Notebook to split the raw dataset in `raw_dataset` into training, validation, and test sets. Allows customization of the split ratio and applies a 224x224 resizing transformation. |
+| `env/project_env.yaml` | Environment configuration file for setting up the project. |
+| `env/requirements.txt` | List of required Python packages for setting up the project. |
+| `utils/optuna_search.py` | Script for performing hyperparameter search using Optuna. Allows customization of epochs, trials, and hyperparameters. New models can be added by following existing initialization patterns. |
+| `utils/gradcam.py` | Script for generating Grad-CAM heatmaps. Requires a model with a convolutional layer. Users must specify parameters as per function definitions. |
+| `utils/utils_funcs.py` | Contains general utility functions for tasks such as saving models, loading images, displaying graphs, and training. Includes specific functions for adversarial training. |
+| `models/*_model.ipynb` | Model-specific notebook (e.g., `resnet_model.ipynb`). Covers the complete process: data loading, training, saving, and evaluation. Generates confusion matrices and plots loss/accuracy curves. |
+| `models/*_model_atk.ipynb` | Adversarial training notebook for each model (e.g., `resnet_model_atk.ipynb`). Loads a pretrained model, applies adversarial attacks, and trains the model on these attacks. |
 
 
 ## Installation
