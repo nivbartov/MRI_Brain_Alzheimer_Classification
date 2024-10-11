@@ -44,8 +44,30 @@
 - [Citation](#citation)
 - [License](#license)
 
-
 ## Project Overview
+In the cyber security world, efforts are made to protect computing systems from digital attacks which are an emerging thread nowadays. In machine learning, attackers use Adversarial machine learning, which is a technique that tries to fool the models with deceptive data. This data is inserted into the models as an input and decieves the classifiers to misclassify.
+We saw that in [reference [1]](https://arxiv.org/abs/1907.10456), medical images are vulnerable to adversarial attacks.
+Recognizing this vulnerability emphasizes the need for a stronger model resilience.
+
+In this project we try to make a robust model while achiving the two main goals :
+1. defend against adverserial attacks in medical images , particularly in MRI alzhiemer classification. Meaning, whenever the model is under attack, it will still generalize and perform well.
+2. Generalize well in the main classification task of the severity of the alziehmer disease.
+
+In order to achieve our goals, we followed these steps:
+
+In order to achieve our goals, we followed these steps:
+
+1. **Model Fine-Tuning**: We fine-tuned three well-known models: DINOv2, ResNet34, and EfficientNet B0.
+
+2. **Adversarial Attack Implementation**: We performed adversarial attacks using the Fast Gradient Sign Method (FGSM) and Projected Gradient Descent (PGD), which were found to be effective attacks based on the findings in [reference  [6]](https://arxiv.org/abs/2303.14133).
+
+3. **Vulnerability Assessment**: After fine-tuning, we observed that the models were vulnerable to adversarial attacks. 
+
+4. **Adversarial Training**: To enhance model robustness, we conducted adversarial training, focusing particularly on the PGD attack over the FGSM attack, as discussed in [reference [7]](https://arxiv.org/abs/2303.14133).
+
+5. **Model Ensemble**: Finally, we combined the three models using a voting approach to create a more resilient ensemble.
+
+The project is implemented in Python using the PyTorch framework, which allows us to efficiently build and train our models throughout these steps.
 
 ## Project Structure
 ```
@@ -184,8 +206,6 @@ The data is structured as follows:
 
 ## Future Work
 
-## Future Work
-
 1. **Investigation advanced Targeted/Untargeted Attacks and Black-Box Attacks**: Future work can include investigating various targeted attacks, including advanced versions of FGSM such as Iterative FGSM (I-FGSM), Targeted I-FGSM, IND and OOD attacks, Kryptonite Attacks and one pixel attacks. These attacks can be performed in a targeted manner to evaluate the model's vulnerabilities and also in an untargeted way. Additionally, we can further explore black-box attacks when the model is not available to the attacker.
 
 2. **Diverse Datasets**: In the future we plan to utilize a more diverse dataset featuring various MRI images across different demographics and orientations. Currently, we used the T1 MRI. we can incorporate the T2 and more...
@@ -204,26 +224,30 @@ We can also use a multi-modal data such as PET and CT scans.
 
 #### Sources
 
-1. Facebook Research. (2023). DINOv2. GitHub repository. [https://github.com/facebookresearch/dinov2](https://github.com/facebookresearch/dinov2)
+[1] Luke Chugh. (2021). Best Alzheimer MRI dataset. Kaggle dataset. [https://www.kaggle.com/datasets/lukechugh/best-alzheimer-mri-dataset-99-accuracy](https://www.kaggle.com/datasets/lukechugh/best-alzheimer-mri-dataset-99-accuracy)
 
-2. Luke Chugh. (2021). Best Alzheimer MRI dataset. Kaggle dataset. [https://www.kaggle.com/datasets/lukechugh/best-alzheimer-mri-dataset-99-accuracy](https://www.kaggle.com/datasets/lukechugh/best-alzheimer-mri-dataset-99-accuracy)
+[2] Facebook Research. (2023). DINOv2. GitHub repository. [https://github.com/facebookresearch/dinov2](https://github.com/facebookresearch/dinov2)
 
-3. Gil, J. (2020). PyTorch Grad-CAM. GitHub repository. [https://github.com/jacobgil/pytorch-grad-cam](https://github.com/jacobgil/pytorch-grad-cam)
+[3] Gil, J. (2020). PyTorch Grad-CAM. GitHub repository. [https://github.com/jacobgil/pytorch-grad-cam](https://github.com/jacobgil/pytorch-grad-cam)
 
-4. Optuna. (2023). Optuna: A hyperparameter optimization framework. GitHub repository. [https://github.com/optuna/optuna](https://github.com/optuna/optuna)
+[4] Optuna. (2023). Optuna: A hyperparameter optimization framework. GitHub repository. [https://github.com/optuna/optuna](https://github.com/optuna/optuna)
 
 #### References
 
-1. Madry, A., Makelov, A., Schmidt, L., Tsipras, D., & Vladu, A. (2017). Understanding adversarial attacks on deep learning based medical image analysis systems. [arXiv:1907.10456](https://arxiv.org/abs/1907.10456)
+[1] Madry, A., Makelov, A., Schmidt, L., Tsipras, D., & Vladu, A. (2017). Understanding adversarial attacks on deep learning based medical image analysis systems. [arXiv:1907.10456](https://arxiv.org/abs/1907.10456)
 
-2. Zhang, Y., & Yu, L. (2023). Adversarial attacks on foundational vision models. [arXiv:2308.14597](https://arxiv.org/abs/2308.14597)
+[2] Zhang, Y., & Yu, L. (2023). Adversarial attacks on foundational vision models. [arXiv:2308.14597](https://arxiv.org/abs/2308.14597)
 
-3. Chen, X., Zhang, H., & Li, Y. (2022). Exploring adversarial attacks and defenses in vision transformers trained with DINO. [arXiv:2206.06761](https://arxiv.org/abs/2206.06761)
+[3] Chen, X., Zhang, H., & Li, Y. (2022). Exploring adversarial attacks and defenses in vision transformers trained with DINO. [arXiv:2206.06761](https://arxiv.org/abs/2206.06761)
 
-4. Xie, L., & Wang, Z. (2023). DINOv2: Learning robust visual features without supervision. [arXiv:2304.07193](https://arxiv.org/abs/2304.07193)
+[4] Xie, L., & Wang, Z. (2023). DINOv2: Learning robust visual features without supervision. [arXiv:2304.07193](https://arxiv.org/abs/2304.07193)
 
 
-5. Tajbakhsh, N., Shin, J., Gurudu, S. R., & Hurst, R. T. (2022). What makes transfer learning work for medical images: Feature reuse & other factors. [arXiv:2203.01825](https://arxiv.org/abs/2203.01825)
+[5] Tajbakhsh, N., Shin, J., Gurudu, S. R., & Hurst, R. T. (2022). What makes transfer learning work for medical images: Feature reuse & other factors. [arXiv:2203.01825](https://arxiv.org/abs/2203.01825)
+
+[6] Zhang, H., Li, Y., & Chen, X. (2023). Adversarial Attack and Defense for Medical Image Analysis: Methods and Applications. [arXiv:2308.14597](https://arxiv.org/abs/2308.14597)
+
+[7] Madry, A., Makelov, A., Schmidt, L., Tsipras, D., & Vladu, A. (2018). Towards Deep Learning Models Resistant to Adversarial Attacks. [arXiv:1706.06083](https://arxiv.org/abs/1706.06083)
 
 ## Citation
 ```
