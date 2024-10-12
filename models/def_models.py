@@ -90,32 +90,27 @@ class EfficientNet(nn.Module):
         in_features = 1000
         
         self.fc = nn.Sequential(
-            nn.Linear(in_features, 2048),
-            nn.BatchNorm1d(2048),
-            nn.GELU(),
-            nn.Dropout(0.2),
-            
-            nn.Linear(2048, 1024),
+            nn.Linear(in_features, 1024),
             nn.BatchNorm1d(1024),
             nn.GELU(),
-            nn.Dropout(0.2),
+            nn.Dropout(0.1),
             
             nn.Linear(1024, 512),
             nn.BatchNorm1d(512),
             nn.GELU(),
-            nn.Dropout(0.2),
+            nn.Dropout(0.1),
             
             nn.Linear(512, 256),
             nn.BatchNorm1d(256),
             nn.GELU(),
-            nn.Dropout(0.2),
+            nn.Dropout(0.1),
             
             nn.Linear(256, output_channels)
         )
     
     def forward(self, x):
         x = self.EfficientNet_backbone(x)
-        # x = x.view(x.size(0), -1)
+        x = x.view(x.size(0), -1)
         x = self.fc(x)
         return x
     
