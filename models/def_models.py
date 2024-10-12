@@ -3,7 +3,7 @@ import os
 import torch
 import torch.nn as nn
 import copy
-    
+
 class DINOv2(nn.Module):
     def __init__(self, DINOv2_backbone, output_channels):
         super(DINOv2, self).__init__()
@@ -51,27 +51,22 @@ class ResNet(nn.Module):
         in_features = 1000 # Retrieve in_features from the original head
         
         self.fc = nn.Sequential(
-            nn.Linear(in_features, 2048),
-            nn.BatchNorm1d(2048),
+            nn.Linear(in_features, 1024),
+            nn.BatchNorm1d(1024),
             nn.GELU(),
             nn.Dropout(0.1),
             
-            nn.Linear(2048, 2048),
-            nn.BatchNorm1d(2048),
+            nn.Linear(1024, 512),
+            nn.BatchNorm1d(512),
             nn.GELU(),
             nn.Dropout(0.1),
             
-            nn.Linear(2048, 2048),
-            nn.BatchNorm1d(2048),
+            nn.Linear(512, 256),
+            nn.BatchNorm1d(256),
             nn.GELU(),
             nn.Dropout(0.1),
             
-            nn.Linear(2048, 1000),
-            nn.BatchNorm1d(1000),
-            nn.GELU(),
-            nn.Dropout(0.1),
-            
-            nn.Linear(1000, output_channels)
+            nn.Linear(256, output_channels)
         )
     
     def forward(self, x):
@@ -113,8 +108,7 @@ class EfficientNet(nn.Module):
         x = x.view(x.size(0), -1)
         x = self.fc(x)
         return x
-    
-    
+  
 class NaiveModel(nn.Module):
     def __init__(self, input_channels=3, output_channels=4):
         super(NaiveModel, self).__init__()

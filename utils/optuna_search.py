@@ -70,16 +70,16 @@ def define_model(trial, model_name, transfer_learning):
         # Create the ResNet model, passing the backbone
         model = model_class(ResNet_backbone=resnet_model, output_channels=output_channels)
     elif model_name == 'EfficientNet':
-        # Load the ResNet backbone
-        resnet_model = torchvision.models.efficientnet_b4(pretrained=True)
+        # Load the EfficientNet backbone
+        efficientnet_model = torchvision.models.efficientnet_b0(pretrained=True)
         
-        # Freeze the ResNet layers if using transfer learning
+        # Freeze the EfficientNet layers if using transfer learning
         if transfer_learning:
-            for param in resnet_model.parameters():
+            for param in efficientnet_model.parameters():
                 param.requires_grad = False
         
-        # Create the ResNet model, passing the backbone
-        model = model_class(EfficientNet_backbone=resnet_model, output_channels=output_channels)
+        # Create the EfficientNet model, passing the backbone
+        model = model_class(EfficientNet_backbone=efficientnet_model, output_channels=output_channels)
     else:
         # Handle other model types (NaiveModel, NaiveModelAug) as needed
         model = model_class(input_channels=3, output_channels=output_channels)
