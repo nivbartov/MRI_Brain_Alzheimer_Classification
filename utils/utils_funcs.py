@@ -127,6 +127,61 @@ def save_model(model, optimizer, epoch, train_epoch_losses, validation_epoch_los
     # Save the state to a file
     torch.save(state, filename)
     print(f'Saved as {filename}')
+    
+# Function to calculate the mean and standard deviation of a dataset
+def calculate_mean_std(dataset):
+    mean = torch.zeros(3)
+    std = torch.zeros(3)
+    num_pixels = 0
+
+    for image, _ in dataset:
+        mean += image.mean(dim=(1, 2))
+        std += image.pow(2).mean(dim=(1, 2))
+        num_pixels += 1
+
+    mean /= num_pixels
+    std = torch.sqrt(std / num_pixels - mean.pow(2))
+
+    return mean, std
+
+# Function to create a new dataset with normalized images and scaled to [0, 1]
+def get_normalized_dataset(dataset, mean, std):
+    normalized_images = []
+    labels = []
+    for image, label in dataset:
+        # Normalize the image tensor
+        normalized_image = (image - mean[:, None, None]) / std[:, None, None]
+        
+        # Scale the normalized image to range [0, 1]
+        scaled_image = (normalized_image + 1) / 2
+        
+        normalized_images.append(scaled_image)
+        labels.append(label)
+        
+    return torch.stack(normalized_images), torch.tensor(labels)
+
+
+def prepare_datasets(train_set, validation_set, test_set):
+    # Calculate the mean and std for the training set
+    train_mean, train_std = calculate_mean_std(train_set)
+    print(f"Training Set Mean: {train_mean}")
+    print(f"Training Set Std: {train_std}")
+
+    # Normalize and scale all datasets using the mean and std from the training set
+    train_images, train_labels = get_normalized_dataset(train_set, train_mean, train_std)
+    validation_images, validation_labels = get_normalized_dataset(validation_set, train_mean, train_std)
+    test_images, test_labels = get_normalized_dataset(test_set, train_mean, train_std)
+
+    # Create TensorDatasets
+    train_set = TensorDataset(train_images, train_labels)
+    validation_set = TensorDataset(validation_images, validation_labels)
+    test_set = TensorDataset(test_images, test_labels)
+    
+    print(f"Normalized using Mean: {train_mean} and Std: {train_std}.")
+    print("Rescaled to [0,1]")
+
+    return train_set, validation_set, test_set    
+    
 
 def calculate_accuracy(model, dataloader, device):
     model.eval()
