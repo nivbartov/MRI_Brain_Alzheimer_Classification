@@ -29,6 +29,8 @@ from torchcam.methods import SmoothGradCAMpp
 from torchvision.transforms import ToPILImage
 from torchcam.methods import CAM
 from collections import Counter
+import matplotlib.patches as mpatches
+
 
 def plot_random_images(dataset, num_imgs=20):
     # Sample random indices from the dataset
@@ -572,34 +574,52 @@ def test_single_point_attack(model, device, testloader, attack_type, epsilon, al
     # Return the accuracy and adversarial examples
     return final_acc, adv_examples
 
-def plot_adversarial_examples(parameter, examples, attack_name, parameter_type, figsize=(12, 15)):
-    cnt = 0
-    plt.figure(figsize=figsize)  # Set the figure size
-    
-    # Add a header title for the attack name
-    plt.suptitle(f"Adversarial Examples under {attack_name} Attack", fontsize=16, fontweight='bold', y=0.95)
 
-    for i in range(1, len(parameter)):  # Start from the second epsilon
+def plot_adversarial_examples(parameter, examples, attack_name, parameter_type):
+    cnt = 0
+    plt.figure(figsize=(23,14))  # Set the figure size
+    
+    # Add a header title for the attack name, centered with dynamic vertical space
+    plt.suptitle(f"Adversarial Examples under {attack_name} Attack", fontsize=15, fontweight='bold', 
+                 y=1.05, x=0.5)
+    
+    # Create patches for the legend
+    correct_patch = mpatches.Patch(color='green', label='Correct Label')
+    adv_patch = mpatches.Patch(color='red', label='Adversarial Classification')
+    
+    # Add the legend, dynamically adjusting its position based on the header's position
+    plt.figlegend(handles=[correct_patch, adv_patch], loc='upper center', 
+                  bbox_to_anchor=(0.5, 1.02),  # Position based on header
+                  frameon=True, ncol=1, fontsize=12, facecolor='white', edgecolor='black')
+    
+    for i in range(1, len(parameter)):  # Start from the second parameter
         for j in range(len(examples[i])):
             cnt += 1
-            plt.subplot(len(parameter) - 1, len(examples[0]), cnt)  # Adjust for i starting from 1
+            plt.subplot(len(parameter) - 1, len(examples[0]), cnt)
             plt.xticks([], [])
             plt.yticks([], [])
+            
             if j == 0:
-                plt.ylabel(f"{parameter_type}: {parameter[i]}", fontsize=14)
+                plt.ylabel(f"{parameter_type}: {parameter[i]}", fontsize=12)
                 
             orig, adv, ex = examples[i][j]  # Unpack the original and adversarial examples
-            
-            # Convert the tensor to a NumPy array, ensuring it's on the CPU
             ex_np = ex.transpose(1, 2, 0)  # Transpose if needed
+            plt.imshow(ex_np)
             
-            plt.title(f"{orig} -> {adv}")
-            plt.imshow(ex_np)  # Display the adversarial example
-
-    # Adjust spacing to prevent overlap between subplots
-    plt.tight_layout(pad=2.0)
-    plt.subplots_adjust(top=0.9, hspace=0.4, wspace=0.2)  # Increase space between subplots
+            plt.text(0.41, 1.05, f"{orig}", color='green', fontsize=12, ha='right', transform=plt.gca().transAxes)
+            plt.text(0.48, 1.05, "->", color='black', fontsize=12, ha='center', transform=plt.gca().transAxes)
+            plt.text(0.55, 1.05, f"{adv}", color='red', fontsize=12, ha='left', transform=plt.gca().transAxes)
+    
+    # Adjust the gap between subplots
+    plt.tight_layout()
+    if(parameter_type == 'Alpha'):
+        plt.subplots_adjust(wspace=-0.82, hspace=0.4)  # Adjust these values as needed for spacing
+    else:
+        plt.subplots_adjust(wspace=-0.9, hspace=0.4)  # Adjust these values as needed for spacing
     plt.show()
+
+
+
 
 def adversarial_train_epoch(model, trainloader, device, criterion, optimizer,
                             attack, adv_weight, kornia_aug=None, use_amp=False):
