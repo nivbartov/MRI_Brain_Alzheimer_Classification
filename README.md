@@ -36,7 +36,7 @@
 - [Files In The Repository](#files-in-the-repository)
 - [Installation](#installation)
 - [Data](#data)
-- [Model](#model)
+- [Models](#models)
 - [Results](#results)
 - [Usage](#usage)
 - [Future Work](#future-work)
@@ -68,67 +68,6 @@ In order to achieve our goals, we followed these steps:
 The project is implemented in Python using the PyTorch framework, which allows us to efficiently build and train our models throughout these steps.
 
 ## Project Structure
-```
-MRI_Brain_Alzheimer_Classification/
-├── 🖼️ assets/
-│   ├── 🔍 Dinov2/
-│   │   ├── confusion_matrix.png
-│   │   ├── loss_curve.png
-│   │   └── accuracy_curve.png
-│   ├── 🔍 Dinov2_atk/
-│   │   ├── ... 
-│   ├── 🔍 Efficientnet/
-│   │   ├── ...
-│   ├── 🔍 Efficientnet_atk/
-│   │   ├── ...
-│   ├── 🔍 Restnet/
-│   │   ├── ...
-│   └── 🔍 Resnet_atk/
-│       ├── ...
-├── ⛓️ checkpoints/
-│   ├── 🎯 optuna/
-│   │   ├── Dinov2/
-│   │   ├── Dinov2_atk/
-│   │   ├── Efficientnet/
-│   │   ├── Efficientnet_atk/
-│   │   ├── Restnet/
-│   │   └── Resnet_atk/
-│   ├── Dinov2/
-│   │   ├── ...
-│   ├── Dinov2_atk/
-│   │   ├── ...
-│   ├── Efficientnet/
-│   │   ├── ...
-│   ├── Efficientnet_atk/
-│   │   ├── ...
-│   ├── Restnet/
-│   │   ├── ...
-│   └── Resnet_atk/
-│       ├── ...
-├── 📊 dataset/
-│   ├── dataset_variables/
-│   │   ├── train_set.pt
-│   │   ├── validation_set.pt
-│   │   └── test_set.pt
-│   ├── raw_dataset/
-│   │   ├── train/
-│   │   └── test/
-│   └── prepare_dataset.ipynb
-├── 🌐 env/
-│   └── project_env.yaml
-├── 📚 models/
-│   ├── results.ipynb
-│   ├── Dinov2.ipynb
-│   ├── Dinov2_atk.ipynb
-│   ├── Efficientnet.ipynb
-│   ├── Efficientnet_atk.ipynb
-│   ├── Restnet.ipynb
-│   └── Resnet_atk.ipynb
-└── 🛠️ utils/
-    ├── optuna_search.py
-    ├── utils_funcs.py
-    └── grad_cam.py
-```
 
 | Directory Name | Content |
 |----------------|---------|
@@ -150,6 +89,7 @@ MRI_Brain_Alzheimer_Classification/
 | `utils/optuna_search.py` | Script for performing hyperparameter search using Optuna. Allows customization of epochs, trials, and hyperparameters. New models can be added by following existing initialization patterns. |
 | `utils/gradcam.py` | Script for generating Grad-CAM heatmaps. Requires a model with a convolutional layer. Users must specify parameters as per function definitions. |
 | `utils/utils_funcs.py` | Contains general utility functions for tasks such as saving models, loading images, displaying graphs, and training. Includes specific functions for adversarial training. |
+| `def_models.py` | In this file the models are defined as a class object. You can find the models we defined and used and you can also add your own. |
 | `models/*_model.ipynb` | Model-specific notebook (e.g., `resnet_model.ipynb`). Covers the complete process: data loading, training, saving, and evaluation. Generates confusion matrices and plots loss/accuracy curves. |
 | `models/*_model_atk.ipynb` | Adversarial training notebook for each model (e.g., `resnet_model_atk.ipynb`). Loads a pretrained model, applies adversarial attacks, and trains the model on these attacks. |
 
@@ -196,7 +136,20 @@ The data is structured as follows:
 - **Validation Set**: Used for hyperparameter tuning and monitoring model performance during training to help prevent overfitting.
 - **Test Set**: Comprises only real images for an unbiased final evaluation of the trained models.
 
-## Model
+## Models
+
+* We provide pre-trained checkpoints for the [dataset](https://www.kaggle.com/datasets/lukechugh/best-alzheimer-mri-dataset-99-accuracy) we used: the normal version and the under attack version. All model checkpoints should be placed inside the `/checkpoints` directory.
+* For each model, the optuna parameters that were used for the training are also avaialble in a **json** file. In order to use the json file, place it under `/checkpoints/optuna_params`
+
+
+| Model Type                 | Link                                                                                | Optuna Params                                                                                |
+|----------------------------|-------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------|
+| `DINOv2 fine-tuned`          | [Dataset MEGA.nz](https:|mega.nz|file|wdMUxaQJ#75L0jqofo4Gj1EyjIJN2zBzt6XFN9s2jgU83XjjAqXQ)      | [Optuna Params MEGA.nz](https:|mega.nz|file|Optuna1) |
+| `DINOv2_atk fine-tuned`                 | [Dataset MEGA.nz](https:|mega.nz|file|9clHVLTI#6_HQXzHWLYal36HnNnynqzQwnmzVY4FIXbnVmQ5eXa8)       | [Optuna Params MEGA.nz](https:|mega.nz|file|Optuna4) | 
+| `Resnet34 fine-tuned`        | [Dataset MEGA.nz](https:|mega.nz|file|MNljnLCZ#3d6U6zP_FCDOBpxPWOJdOOnmjiq8Cyl9ND2u8qjXlsE)       | [Optuna Params MEGA.nz](https:|mega.nz|file|Optuna2) | 
+| `Resnet34_atk fine-tuned`               | [Dataset MEGA.nz](https:|mega.nz|file|UBcl2LgQ#cA2mS1mfSoAbNa8VmjeSkrRHDlXlupjVNNXnhO8zoPs)       | [Optuna Params MEGA.nz](https:|mega.nz|file|Optuna5) | 
+| `EfficientnetB0 fine-tuned`  | [Dataset MEGA.nz](https:|mega.nz|file|QcsRSQRD#-jCBXhIIKs__6Zys8eBLo8f75WQfDhP0LcPLuRgy5p8)       | [Optuna Params MEGA.nz](https:|mega.nz|file|Optuna3) | 
+| `EfficientnetB0_atk fine-tuned`         | [Dataset MEGA.nz](https:|mega.nz|file|oUUjXY4B#LLxCs1h3h3v4pXbLjl2Tplxwoq41DWaLJxyRHTgOWnw)        | [Optuna Params MEGA.nz](https:|mega.nz|file|Optuna6) | 
 
 ## Results
 
@@ -282,6 +235,9 @@ We can also use a multi-modal data such as PET and CT scans.
 [3] Gil, J. (2020). PyTorch Grad-CAM. GitHub repository. [https://github.com/jacobgil/pytorch-grad-cam](https://github.com/jacobgil/pytorch-grad-cam)
 
 [4] Optuna. (2023). Optuna: A hyperparameter optimization framework. GitHub repository. [https://github.com/optuna/optuna](https://github.com/optuna/optuna)
+
+[5] Hoki. (2020). Torchattack: PyTorch adversarial attack library. GitHub repository. [https://github.com/Harry24k/torchattacks](https://github.com/Harry24k/torchattacks)
+
 
 #### References
 
