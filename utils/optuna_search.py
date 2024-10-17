@@ -76,7 +76,8 @@ def define_model(trial, model_name, transfer_learning):
         # Freeze the EfficientNet layers if using transfer learning
         if transfer_learning:
             for param in efficientnet_model.parameters():
-                param.requires_grad = False
+                param.requires_grad = True
+                
         
         # Create the EfficientNet model, passing the backbone
         model = model_class(EfficientNet_backbone=efficientnet_model, output_channels=output_channels)
@@ -98,7 +99,7 @@ def objective(trial, model_name, epochs, device, loss_criterion, transfer_learni
     optimizer_name = trial.suggest_categorical("optimizer", ["Adam", "RMSprop", "SGD"])
     optimizer = getattr(optim, optimizer_name)(model.parameters(), lr=lr)
     # batch size
-    batch_size = trial.suggest_categorical('batch_size', [16,32,64,128,256])
+    batch_size = trial.suggest_categorical('batch_size', [16,32,64])
     # scheduler
     scheduler_name = trial.suggest_categorical('scheduler', ["StepLR", "CosineAnnealingLR"])
     scheduler = StepLR(optimizer, 10, 0.1) if scheduler_name == "StepLR" else CosineAnnealingLR(optimizer, 30)
@@ -195,7 +196,7 @@ def save_best_params(best_params, model_name, loss_value, base_dir='checkpoints/
     
     print(f"Best parameters saved to {file_path}")
 
-def optuna_param_search(model_name, loss_criterion, num_epochs_for_experiments=10, device='cpu', transfer_learning=False):
+def optuna_param_search(model_name, loss_criterion, num_epochs_for_experiments=12, device='cpu', transfer_learning=False):
     
     print(f"Optuna is done on device: {device}")
     
@@ -204,7 +205,7 @@ def optuna_param_search(model_name, loss_criterion, num_epochs_for_experiments=1
     # make the study
     sampler = optuna.samplers.TPESampler()
     study = optuna.create_study(study_name="mri-alzhimer-classification", direction="maximize", sampler=sampler)
-    study.optimize(objective_with_args, n_trials=40)
+    study.optimize(objective_with_args, n_trials=35)
 
     # get the purned and completed trials
     pruned_trials = [t for t in study.trials if t.state == optuna.trial.TrialState.PRUNED]
