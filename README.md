@@ -202,6 +202,59 @@ The data is structured as follows:
 
 ## Usage
 
+In this repository , you have the following usage options:
+
+#### train a specific model
+
+1. copy one of the models notebook **`dino_v2_model.ipynb`** , **`efficienetnet_model.ipynb`** ,**`resnet_model.ipynb`**. rename the new notebook to be **`*_model.ipynb`** where * is the name of your backbone.
+2. follow up the notebooks structure:
+  2.1. define the models architecture accordinglly. add the architecture to the file **`models/def_models.py`**
+  2.2. If you are interested in transfer learning, set the **`requires_grad = False`** for layers you want to freeze. Otherwise, **`requires_grad = True`** for layers you want to fine tune.
+  2.3. set **`load_existing_hyperparams = False`** if you want to perform the optuna search for the specific architecture and constraints of the model. define the number of epochs and trials for the search process as input parameters to  the function.
+  2.4. define the number of epochs for the training.
+  2.5. define the augmentations if needed.
+  2.6. in the training process you have 2 options:
+    *  Train from scratch. For this option , set the **`load_existing_params = False`**. 
+    * reload an exisiting model. you can reload an existing model  that was previously trained and choose to train it or not.  Loading an exisiting model set **`load_existing_params =  True`**. for training a loaded model, set the **`train_loaded_model = True`** in addition.
+  2.7. After the training process, the confusion matrix, loss curve and accuracy curve are saved under the `assets/*` when  `*` is the models name.
+
+#### adversarial attacks: training and attacking
+**Note:** This option can be performed only if you have a **pretrained model** with a defined architecture under the **`models/def_models.py`** file.
+
+Here are the common steps for both options:
+1. copy one of the models notebook **`dino_v2_model_atk.ipynb`** , **`efficienetnet_model_atk.ipynb`** ,**`resnet_model_atk.ipynb`**. rename the new notebook to be **`*_model_atk.ipynb`** where * is the name of your backbone.
+2. set the models definition from the training process under no attacks.
+3. set **`load_existing_hyperparams = True`** if you want to use the previous optuna hyper-parameters that you found in the first training process under no attacks. This is the recommended approach. Otherwise you can set **`load_existing_hyperparams = False`** and make a new optuna search.
+4. Load the pretrained model. set the **`pretrained_model_path`** parameter to the path of your pretrained model.
+
+##### perform attacks
+
+* **FGSM attack** -  define the `Epsilon` value you want to perform the attack with. It is recommended to set a small number of `Epsilon` if you are limited with resources.
+plot the adversarial examples using the `utils_funcs.plot_adversarial_examples` function. 
+here is how:
+`utils_funcs.plot_adversarial_examples(epsilons, examples, attack_name='fgsm', parameter_type = 'Epsilon')`.
+This function will show the correct labels and the adversarial classification of the model for each `Epsilon`.
+
+* **PGD attack** -  first, define the `Epsilon` and `num_iter` values you want to perform the attack with.Then, define the `Alpha` values.They can be smaller than `Epsilon/num_iter`(the `Epsilon` defines the radious for petubations) only.
+plot the adversarial examples using the `utils_funcs.plot_adversarial_examples` function. 
+here is how:
+`utils_funcs.plot_adversarial_examples(alphas, examples , attack_name='pgd', parameter_type = 'Alpha')`.
+This function will show the correct labels and the adversarial classification of the model for each `Alpha`.
+
+
+##### adversarial attacks training
+
+1. define the following parameters : `Epsilon`, `num_iter`, `Alpha`(see contraints under [PGD attack](#pgd-attack)), `adv_weight`, `num_epochs`.
+2. define the number of epochs for the training.
+3. define the augmentations if needed.
+4. in the training process you have 2 options:
+    *  Train from scratch. For this option , set the  **`load_existing_params = False`**. 
+    * reload an exisiting model. you can reload an  existingmodel  that was previously trained and choose to   train itor not.  Loading an exisiting model   set**`load_existing_params =  True`**. for training a   loadedmodel, set the **`train_loaded_model = True`**  inaddition.
+5. After the training process, the confusion matrix, loss curve and accuracy curve are saved under the `assets/*` when  `*` is the models name.
+
+
+  
+
 ## Future Work
 
 1. **Investigation advanced Targeted/Untargeted Attacks and Black-Box Attacks**: Future work can include investigating various targeted attacks, including advanced versions of FGSM such as Iterative FGSM (I-FGSM), Targeted I-FGSM, IND and OOD attacks, Kryptonite Attacks and one pixel attacks. These attacks can be performed in a targeted manner to evaluate the model's vulnerabilities and also in an untargeted way. Additionally, we can further explore black-box attacks when the model is not available to the attacker.
