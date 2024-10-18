@@ -39,7 +39,6 @@
 - [Models](#models)
 - [Results](#results)
 - [Usage](#usage)
-- [Future Work](#future-work)
 - [Sources and References](#sources-and-references)
 - [Citation](#citation)
 - [License](#license)
@@ -249,25 +248,6 @@ This function will show the correct labels and the adversarial classification of
     *  Train from scratch. For this option , set the  **`load_existing_params = False`**. 
     * reload an exisiting model. you can reload an  existingmodel  that was previously trained and choose to   train itor not.  Loading an exisiting model   set**`load_existing_params =  True`**. for training a   loadedmodel, set the **`train_loaded_model = True`**  inaddition.
 5. After the training process, the confusion matrix, loss curve and accuracy curve are saved under the `assets/*` when  `*` is the models name.
-
-
-  
-
-## Future Work
-
-1. **Investigation advanced Targeted/Untargeted Attacks and Black-Box Attacks**: Future work can include investigating various targeted attacks, including advanced versions of FGSM such as Iterative FGSM (I-FGSM), Targeted I-FGSM, IND and OOD attacks, Kryptonite Attacks and one pixel attacks. These attacks can be performed in a targeted manner to evaluate the model's vulnerabilities and also in an untargeted way. Additionally, we can further explore black-box attacks when the model is not available to the attacker.
-
-2. **Diverse Datasets**: In the future we plan to utilize a more diverse dataset featuring various MRI images across different demographics and orientations. Currently, we used the T1 MRI. we can incorporate the T2 and more...
-We can also use a multi-modal data such as PET and CT scans.
-
-3. **RNN Performance Evaluation**: We will assess the performance of Recurrent Neural Networks (RNNs) to determine their contribution to the robustness of the ensemble model.
-
-4. **Ensemble Method Exploration**: Various ensemble techniques, such as stacking and blending.
-
-5. **Real-World Testing**: Conducting real-world tests in collaboration with radiologists and people that are responsible for the reliability of medical data - images in particular. This can check the model's applicability and his reliability in the real world.
-
-
-
 
 ## Sources and References
 
