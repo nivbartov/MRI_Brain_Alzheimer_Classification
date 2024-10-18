@@ -580,7 +580,7 @@ def plot_adversarial_examples(parameter, examples, attack_name, parameter_type):
     plt.figure(figsize=(23,14))  # Set the figure size
     
     # Add a header title for the attack name, centered with dynamic vertical space
-    plt.suptitle(f"Adversarial Examples under {attack_name} Attack", fontsize=15, fontweight='bold', 
+    plt.suptitle(f"Adversarial Examples Under {attack_name} Attack", fontsize=15, fontweight='bold', 
                  y=1.05, x=0.5)
     
     # Create patches for the legend
