@@ -87,9 +87,9 @@ The project is implemented in Python using the PyTorch framework, which allows u
 | `env/project_env.yaml` | Environment configuration file for setting up the project. |
 | `env/requirements.txt` | List of required Python packages for setting up the project. |
 | `utils/optuna_search.py` | Script for performing hyperparameter search using Optuna. Allows customization of epochs, trials, and hyperparameters. New models can be added by following existing initialization patterns. |
-| `utils/gradcam.py` | Script for generating Grad-CAM heatmaps. Requires a model with a convolutional layer. Users must specify parameters as per function definitions. |
+| `utils/Grad_cam.py` | Script for generating Grad-CAM heatmaps. Requires a model with a convolutional layer. Users must specify parameters as per function definitions. |
 | `utils/utils_funcs.py` | Contains general utility functions for tasks such as saving models, loading images, displaying graphs, and training. Includes specific functions for adversarial training. |
-| `def_models.py` | In this file the models are defined as a class object. You can find the models we defined and used and you can also add your own. |
+| `models/def_models.py` | In this file the models are defined as a class object. You can find the models we defined and used and you can also add your own. |
 | `models/*_model.ipynb` | Model-specific notebook (e.g., `resnet_model.ipynb`). Covers the complete process: data loading, training, saving, and evaluation. Generates confusion matrices and plots loss/accuracy curves. |
 | `models/*_model_atk.ipynb` | Adversarial training notebook for each model (e.g., `resnet_model_atk.ipynb`). Loads a pretrained model, applies adversarial attacks, and trains the model on these attacks. |
 
@@ -98,7 +98,7 @@ The project is implemented in Python using the PyTorch framework, which allows u
 
 This code works with any OS — Linux or Windows. To set up all the required dependencies, please follow one of the instructions below:
 
-#### Conda
+##### 1. Conda
 
 [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/getting-started.html) (Recommended) - Clone this repository and then create and activate the **`env/project_env.yaml`** conda environment using the provided environment definition:
 
@@ -107,13 +107,58 @@ conda env create -f env/project_env.yaml
 conda activate project_env
 ```
 
-#### Pip Install
+##### 2. Pip Install
 
 Clone this repository and then use the provided **`env/requirements.txt`** to install the dependencies.
 
 ```
 pip install -r env/requirements.txt
 ```
+
+#### General Prerequisites
+
+| Library           | Version           | Why?                                                       |
+|-------------------|-------------------|-----------------------------------------------------------|
+| `Python`          | `3.10`            | Required Python version for the project                   |
+| `torch`           | `>= 1.4.0`        | Core deep learning library for building models             |
+| `matplotlib`      | `>= 3.7.1`        | For plotting graphs and visualizations                     |
+| `numpy`           | `>= 1.24.3`       | Essential for numerical operations and data manipulation    |
+| `opencv`          | `>= 4.5.0`        | For image processing tasks                                 |
+| `pandas`          | `>= 1.5.0`        | For data manipulation and analysis                         |
+| `tqdm`            | `>= 4.65.0`       | For progress bar visualization                             |
+| `scipy`           | `>= 1.8.1`        | For scientific computing and technical calculations        |
+| `seaborn`         | `>= 0.11.2`       | For statistical data visualization                         |
+| `plotly`          | `>= 5.7.0`        | For interactive visualizations                             |
+| `notebook`        | `>= 6.5.4`        | To run Jupyter Notebooks                                   |
+| `ipywidgets`      | `>= 7.6.0`        | For interactive widgets in Jupyter notebooks               |
+| `torchmetrics`    | `>= 0.10.0`       | For easy calculation of metrics during model training     |
+| `optuna`          | `>= 2.10.0`       | For hyperparameter optimization                            |
+| `fvcore`          | `>= 0.1.5`        | For utilities and helper functions                         |
+| `iopath`          | `>= 0.1.9`        | For input/output path management                           |
+| `submitit`        | `>= 1.3.0`        | For managing job submissions                               |
+| `kornia`          | `>= 0.6.0`        | For computer vision tasks and transformations              |
+| `prettytable`     | `>= 2.4.0`        | For pretty-printing tables                                 |
+| `pickleshare`     | `>= 0.7.5`        | For a lightweight persistent storage                       |
+| `torchcam`        | `>= 0.1.2`        | For visualization of neural network activations            |
+| `torchattacks`    | `>= 0.2.0`        | For implementing adversarial attacks in PyTorch           |
+
+
+#### DINOv2 Specific Requirements
+
+for further information, check source [[2]](https://github.com/facebookresearch/dinov2)
+
+| Library           | Version           | Why?                                                       |
+|-------------------|-------------------|-----------------------------------------------------------|
+| `torch`           | `== 2.0.0`        | Core deep learning library for building models             |
+| `torchvision`     | `== 0.15.0`       | For vision-related utilities and transformations           |
+| `omegaconf`       | `Latest`          | For managing configurations easily                         |
+| `torchmetrics`    | `== 0.10.3`       | For easy calculation of metrics during model training     |
+| `fvcore`          | `Latest`          | For utilities and helper functions                         |
+| `iopath`          | `Latest`          | For input/output path management                           |
+| `submitit`        | `Latest`          | For managing job submissions                               |
+| `xformers`        | `== 0.0.18`       | For efficient transformers                                 |
+| `cuml-cu11`       | `Latest`          | For GPU-accelerated machine learning                       |
+
 
 ## Data
 
