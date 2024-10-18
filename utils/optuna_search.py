@@ -38,7 +38,7 @@ def save_best_params(best_params, model_name, loss_value, base_dir='checkpoints/
 
   
 def define_model(trial, model_name, transfer_learning):
-    models = ['NaiveModelAug', 'NaiveModel', 'DINOv2', 'ResNet', 'EfficientNet']
+    models = ['DINOv2', 'ResNet', 'EfficientNet']
     
     if model_name not in models:
         raise ValueError(f"Model name {model_name} is not in the list of available models: {models}")
@@ -65,7 +65,7 @@ def define_model(trial, model_name, transfer_learning):
         # Freeze the ResNet layers if using transfer learning
         if transfer_learning:
             for param in resnet_model.parameters():
-                param.requires_grad = False
+                param.requires_grad = True
         
         # Create the ResNet model, passing the backbone
         model = model_class(ResNet_backbone=resnet_model, output_channels=output_channels)
@@ -77,8 +77,7 @@ def define_model(trial, model_name, transfer_learning):
         if transfer_learning:
             for param in efficientnet_model.parameters():
                 param.requires_grad = True
-                
-        
+
         # Create the EfficientNet model, passing the backbone
         model = model_class(EfficientNet_backbone=efficientnet_model, output_channels=output_channels)
     else:
