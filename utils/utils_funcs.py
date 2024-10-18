@@ -183,7 +183,89 @@ def prepare_datasets(train_set, validation_set, test_set):
     print("Rescaled to [0,1]")
 
     return train_set, validation_set, test_set    
+
+import torch
+
+def ensemble_predict(models, weights, images, device):
+    """
+    Combines predictions from multiple models using a weighted average of the softmax outputs.
     
+    Args:
+    models: list of models to ensemble.
+    weights: list of weights to apply to each model's predictions.
+    images: batch of images to predict on.
+    device: device on which to run the models (CPU or CUDA).
+    
+    Returns:
+    Final ensemble prediction after combining the models' outputs.
+    """
+    assert len(models) == len(weights), "The number of models and weights must be the same."
+
+    # Initialize the combined predictions to zero
+    final_prediction = None
+
+    with torch.no_grad():
+        for model, weight in zip(models, weights):
+            # Forward pass
+            outputs = model(images.to(device))
+            
+            # Apply softmax to get probabilities
+            softmax_outputs = torch.nn.functional.softmax(outputs, dim=1)
+
+            # Apply weight to the softmax outputs
+            weighted_outputs = weight * softmax_outputs
+
+            # Accumulate the weighted predictions
+            if final_prediction is None:
+                final_prediction = weighted_outputs
+            else:
+                final_prediction += weighted_outputs
+
+    return final_prediction
+
+
+def calculate_ensemble_accuracy(models, weights, dataloader, device):
+    """
+    Evaluates the accuracy of the ensemble model on a given dataloader.
+    
+    Args:
+    models: list of models to ensemble.
+    weights: list of weights for each model.
+    dataloader: DataLoader object to iterate through the dataset.
+    device: device to run the models on (CPU or CUDA).
+    
+    Returns:
+    Accuracy of the ensemble model as a percentage.
+    """
+    # Set all models to evaluation mode and move them to the correct device
+    for model in models:
+        model.eval()
+        model.to(device)
+        model.zero_grad = True
+
+    total_correct = 0
+    total_images = 0
+
+    with torch.no_grad():
+        for data in dataloader:
+            images, labels = data
+            images = images.to(device)
+            labels = labels.to(device)
+            
+            # Get ensemble prediction
+            final_prediction = ensemble_predict(models, weights, images, device)
+            
+            # Get the class with the highest probability (predicted class)
+            _, predicted = torch.max(final_prediction.data, 1)
+
+            # Update counts for accuracy calculation
+            total_images += labels.size(0)
+            total_correct += (predicted == labels).sum().item()
+
+    ensemble_accuracy = total_correct / total_images * 100
+    return ensemble_accuracy
+
+  
 
 def calculate_accuracy(model, dataloader, device):
     model.eval()
