@@ -142,14 +142,14 @@ The data is structured as follows:
 * For each model, the optuna parameters that were used for the training are also avaialble in a **json** file. In order to use the json file, place it under `/checkpoints/optuna_params`
 
 
-| Model Type                 | Link                                                                                | Optuna Params                                                                                |
+| Model Type                 | Google Drive Link                                                                                | Optuna Params                                                                                |
 |----------------------------|-------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------|
-| `DINOv2 fine-tuned`          | [Dataset MEGA.nz](https:|mega.nz|file|wdMUxaQJ#75L0jqofo4Gj1EyjIJN2zBzt6XFN9s2jgU83XjjAqXQ)      | [Optuna Params MEGA.nz](https:|mega.nz|file|Optuna1) |
-| `DINOv2_atk fine-tuned`                 | [Dataset MEGA.nz](https:|mega.nz|file|9clHVLTI#6_HQXzHWLYal36HnNnynqzQwnmzVY4FIXbnVmQ5eXa8)       | [Optuna Params MEGA.nz](https:|mega.nz|file|Optuna4) | 
-| `Resnet34 fine-tuned`        | [Dataset MEGA.nz](https:|mega.nz|file|MNljnLCZ#3d6U6zP_FCDOBpxPWOJdOOnmjiq8Cyl9ND2u8qjXlsE)       | [Optuna Params MEGA.nz](https:|mega.nz|file|Optuna2) | 
-| `Resnet34_atk fine-tuned`               | [Dataset MEGA.nz](https:|mega.nz|file|UBcl2LgQ#cA2mS1mfSoAbNa8VmjeSkrRHDlXlupjVNNXnhO8zoPs)       | [Optuna Params MEGA.nz](https:|mega.nz|file|Optuna5) | 
-| `EfficientnetB0 fine-tuned`  | [Dataset MEGA.nz](https:|mega.nz|file|QcsRSQRD#-jCBXhIIKs__6Zys8eBLo8f75WQfDhP0LcPLuRgy5p8)       | [Optuna Params MEGA.nz](https:|mega.nz|file|Optuna3) | 
-| `EfficientnetB0_atk fine-tuned`         | [Dataset MEGA.nz](https:|mega.nz|file|oUUjXY4B#LLxCs1h3h3v4pXbLjl2Tplxwoq41DWaLJxyRHTgOWnw)        | [Optuna Params MEGA.nz](https:|mega.nz|file|Optuna6) | 
+| `DINOv2 fine-tuned`          | [Download .pth file](https://drive.google.com/file/d/1jABpNVpMTrehBhL6ilm2e0gTx2C7fQyd/view?usp=drive_link)      | [Download JSON file](https://drive.google.com/file/d/1EyuLRh44TgUEpMn5ErN77XdZEmFZ8MNd/view?usp=drive_link) |
+| `DINOv2_atk fine-tuned`                 | [Download .pth file](....)       | [Download JSON file](https://drive.google.com/file/d/1EyuLRh44TgUEpMn5ErN77XdZEmFZ8MNd/view?usp=drive_link) | 
+| `Resnet34 fine-tuned`        | [Download .pth file](.....)       | [Download JSON file](....) | 
+| `Resnet34_atk fine-tuned`               | [Download .pth file](....)       | [Download JSON file](....) | 
+| `EfficientnetB0 fine-tuned`  | [Download .pth file](https://drive.google.com/file/d/1SuudU3uv2FCtJiD1XKdfpAPaMnk70Qhw/view?usp=drive_link)       | [Download JSON file](https://drive.google.com/file/d/1Bha09qvH3MlP112wm-j9j_NqijC5nPFL/view?usp=drive_link) | 
+| `EfficientnetB0_atk fine-tuned`         | [Download .pth file](.....)        | [Download JSON file](https://drive.google.com/file/d/1Bha09qvH3MlP112wm-j9j_NqijC5nPFL/view?usp=drive_link) | 
 
 ## Results
 
