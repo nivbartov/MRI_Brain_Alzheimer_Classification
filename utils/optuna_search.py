@@ -91,26 +91,31 @@ def objective(trial, model_name, epochs, device, loss_criterion, transfer_learni
     # Generate the model
     model = define_model(trial, model_name, transfer_learning).to(device)
     
-    # Hyperparameters to experiment : learning rate, optimizer, batch size
+    # Hyperparameters to experiment: learning rate, optimizer, batch size
     # learning rate
-    lr = trial.suggest_float("lr", 1e-6, 1e-2, log=True)  # log=True, will use log scale to interplolate between lr
+    lr = trial.suggest_float("lr", 1e-6, 1e-2, log=True)  # log=True, will use log scale to interpolate between lr
     # optimizer
     optimizer_name = trial.suggest_categorical("optimizer", ["Adam", "RMSprop", "SGD"])
     optimizer = getattr(optim, optimizer_name)(model.parameters(), lr=lr)
     # batch size
-    batch_size = trial.suggest_categorical('batch_size', [16,32,64])
+    batch_size = trial.suggest_categorical('batch_size', [16, 32, 64])
     # scheduler
-    scheduler_name = trial.suggest_categorical('scheduler', ["StepLR", "CosineAnnealingLR"])
-    scheduler = StepLR(optimizer, 10, 0.1) if scheduler_name == "StepLR" else CosineAnnealingLR(optimizer, 30)
+    scheduler_name = trial.suggest_categorical('scheduler', ["StepLR", "CosineAnnealingLR", "ReduceLROnPlateau"])
     
-    
+    if scheduler_name == "StepLR":
+        scheduler = StepLR(optimizer, 10, 0.1)
+    elif scheduler_name == "CosineAnnealingLR":
+        scheduler = CosineAnnealingLR(optimizer, 30)
+    else:  # ReduceLROnPlateau
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.1, patience=5, verbose=True)
+
     # Get MRI dataset - load the data and shuffle it
     train_set = torch.load('dataset/dataset_variables/train_set.pt')
     validation_set = torch.load('dataset/dataset_variables/validation_set.pt')
     trainloader = torch.utils.data.DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=3)
     validloader = torch.utils.data.DataLoader(validation_set, batch_size=batch_size, shuffle=False, num_workers=3)
     
-    # limit train examples
+    # Limit train examples
     n_train_examples = 25 * batch_size
     n_valid_examples = 10 * batch_size
     
@@ -130,7 +135,6 @@ def objective(trial, model_name, epochs, device, loss_criterion, transfer_learni
     for epoch in tqdm(range(epochs), total=epochs):
         model.train()
         for batch_idx, (inputs, labels) in enumerate(trainloader, 0):
-            
             # Limiting training data for faster epochs.
             if batch_idx * batch_size >= n_train_examples:
                 break
@@ -167,14 +171,19 @@ def objective(trial, model_name, epochs, device, loss_criterion, transfer_learni
 
         # report back to Optuna how far it is (epoch-wise) into the trial and how well it is doing (accuracy)
         trial.report(accuracy, epoch)
-        scheduler.step() 
+        
+        # Step the scheduler
+        if scheduler_name == "ReduceLROnPlateau":
+            scheduler.step(accuracy)  # Use validation accuracy for the plateau scheduler
+        else:
+            scheduler.step() 
 
-        # then, Optuna can decide if the trial should be pruned
         # Handle pruning based on the intermediate value.
         if trial.should_prune():
             raise optuna.exceptions.TrialPruned()
 
     return accuracy
+
 
 def save_best_params(best_params, model_name, loss_value, base_dir='checkpoints/optuna_params'):
     """Save the best parameters to a structured directory."""
@@ -204,7 +213,7 @@ def optuna_param_search(model_name, loss_criterion, num_epochs_for_experiments=1
     # make the study
     sampler = optuna.samplers.TPESampler()
     study = optuna.create_study(study_name="mri-alzhimer-classification", direction="maximize", sampler=sampler)
-    study.optimize(objective_with_args, n_trials=35)
+    study.optimize(objective_with_args, n_trials=40)
 
     # get the purned and completed trials
     pruned_trials = [t for t in study.trials if t.state == optuna.trial.TrialState.PRUNED]
