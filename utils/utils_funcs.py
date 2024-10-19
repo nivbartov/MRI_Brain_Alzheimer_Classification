@@ -30,6 +30,7 @@ from torchvision.transforms import ToPILImage
 from torchcam.methods import CAM
 from collections import Counter
 import matplotlib.patches as mpatches
+from collections import Counter
 
 
 def plot_random_images(dataset, num_imgs=20):
@@ -83,11 +84,35 @@ def calculate_statistics(dataset, set_name):
     # Count occurrences of each class
     class_counts = Counter(labels)
     
-    # Print statistics
-    print(f"\n{set_name} Statistics:")
-    print(f"Total images: {total_images}")
-    for cls, count in class_counts.items():
-        print(f"Class {cls}: {count} images ({(count / total_images) * 100:.2f}%)")
+    # Define the desired order of classes and their corresponding names
+    class_order = [2, 0, 1, 3]  # NonDemented, MildDemented, ModerateDemented, VeryMildDemented
+    class_names = ['NonDemented', 'MildDemented', 'ModerateDemented', 'VeryMildDemented']
+    
+    # Define appealing colors for each class
+    colors = ['#FF5733', '#28B463', '#3498DB', '#9B59B6']  # Strong Red, Strong Green, Sky Blue, Purple
+
+    # Prepare data for plotting in the specified order
+    counts = [class_counts.get(i, 0) for i in class_order]  # Get counts in the specified order
+
+    # Create the bar chart with specified colors
+    plt.figure(figsize=(8, 5))  # Adjusted size
+    bars = plt.bar(class_names, counts, color=colors)
+    
+    plt.xlabel('Classes')
+    plt.ylabel('Number of Images')
+    plt.title(f'{set_name} Class Distribution', fontweight='bold')
+    plt.xticks(rotation=15)  # Optional: rotate x-axis labels for better readability
+    plt.grid(axis='y', linestyle='--', alpha=0.7)
+
+    # Display percentage on top of each bar, with offset to avoid overlap
+    for i, bar in enumerate(bars):
+        yval = bar.get_height()
+        plt.text(bar.get_x() + bar.get_width()/2, yval + 1, 
+                 f'{yval} ({(yval / total_images) * 100:.2f}%)', 
+                 ha='center', va='bottom')  # Adjusted position
+
+    plt.tight_layout()  # Adjust layout to prevent clipping
+    plt.show()
 
 
 def create_training_session(model_name):
@@ -403,8 +428,11 @@ def train_model(model, num_epochs, trainloader, validationloader, device, criter
                 session_dir  # Pass the session directory to save_model
             )
 
-        # Call scheduler step after each epoch
-        scheduler.step()
+        # Call scheduler step based on its type
+        if isinstance(scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
+            scheduler.step(validation_accuracy)  # Monitor validation accuracy for ReduceLROnPlateau
+        else:
+            scheduler.step()  # For other schedulers, call step after every epoch
 
     return epoch_train_losses, epoch_validation_losses, epoch_train_accuracies, epoch_validation_accuracies
 
