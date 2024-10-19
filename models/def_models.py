@@ -51,7 +51,12 @@ class ResNet(nn.Module):
         in_features = 1000 # Retrieve in_features from the original head
         
         self.fc = nn.Sequential(
-            nn.Linear(in_features, 512),
+            nn.Linear(in_features, 1024),
+            nn.BatchNorm1d(1024),
+            nn.GELU(),
+            nn.Dropout(0.1),
+            
+            nn.Linear(1024, 512),
             nn.BatchNorm1d(512),
             nn.GELU(),
             nn.Dropout(0.1),
@@ -61,12 +66,7 @@ class ResNet(nn.Module):
             nn.GELU(),
             nn.Dropout(0.1),
             
-            nn.Linear(256, 128),
-            nn.BatchNorm1d(128),
-            nn.GELU(),
-            nn.Dropout(0.1),
-            
-            nn.Linear(128, output_channels)
+            nn.Linear(256, output_channels)
         )
     
     def forward(self, x):
