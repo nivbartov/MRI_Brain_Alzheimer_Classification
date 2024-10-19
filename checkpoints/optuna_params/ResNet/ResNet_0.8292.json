@@ -1,6 +1,0 @@
-{
-    "lr": 2.8790570048403626e-05,
-    "optimizer": "RMSprop",
-    "batch_size": 16,
-    "scheduler": "StepLR"
-}
