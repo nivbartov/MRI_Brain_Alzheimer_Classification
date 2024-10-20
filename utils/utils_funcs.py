@@ -823,7 +823,7 @@ def adversarial_validation_epoch(model, validationloader, device, criterion, att
 
 def adversarial_train_model(model, num_epochs, trainloader, validationloader, device, criterion, optimizer, 
                             attack_type='fgsm', epsilon=0.03, adv_weight=0.5, alpha=0.01, num_iter=10, 
-                            kornia_aug=None, use_amp=False, scheduler=None):
+                            kornia_aug=None, use_amp=False, scheduler=None, curriculum_adv_train=False):
     
     epoch_train_losses = []
     epoch_validation_losses = []
@@ -833,19 +833,25 @@ def adversarial_train_model(model, num_epochs, trainloader, validationloader, de
     model_name = type(model).__name__ + '_atk'
     print(f"Adversarial Training model: {model_name} on {device} with {attack_type.upper()} attack and adversarial weight {adv_weight}")
 
-    # Initialize the attack based on the attack_type
-    if attack_type.lower() == 'fgsm':
-        attack = torchattacks.FGSM(model, eps=epsilon)
-    elif attack_type.lower() == 'pgd':
-        attack = torchattacks.PGD(model, eps=epsilon, alpha=alpha, steps=num_iter)
-    else:
-        raise ValueError(f"Unsupported attack type: {attack_type}. Choose 'fgsm' or 'pgd'.")
-
     # Create a session directory for saving the model
     session_dir = create_training_session(model_name)
+    
+    steps = 2 if(curriculum_adv_train) else num_iter
 
     for epoch in range(1, num_epochs + 1):
+        
         epoch_time = time.time()
+        
+        if(curriculum_adv_train  and epoch % 8 == 1 and epoch != 1):
+            steps = min(steps + 1, num_iter)
+        
+        # Initialize the attack based on the attack_type
+        if attack_type.lower() == 'fgsm':
+            attack = torchattacks.FGSM(model, eps=epsilon)
+        elif attack_type.lower() == 'pgd':
+            attack = torchattacks.PGD(model, eps=epsilon, alpha=alpha, steps=steps)
+        else:
+            raise ValueError(f"Unsupported attack type: {attack_type}. Choose 'fgsm' or 'pgd'.")
 
         # Training phase
         train_loss, train_accuracy = adversarial_train_epoch(
@@ -882,7 +888,7 @@ def adversarial_train_model(model, num_epochs, trainloader, validationloader, de
         # Step the scheduler after each epoch if provided
         if scheduler:
             scheduler.step()
-
+    
     return epoch_train_losses, epoch_validation_losses, epoch_train_accuracies, epoch_validation_accuracies
 
 def calculate_accuracy_attack(model, dataloader, device, attack_type, epsilon, alpha=None, num_iter=None):
