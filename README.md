@@ -34,27 +34,26 @@
 - [Project Overview](#project-overview)
 - [Repository Structure](#repository-structure)
 - [Files In The Repository](#files-in-the-repository)
-- [Environment Installation](#environment-installation)
+- [Installation](#environment-installation)
 - [Dataset](#dataset)
 - [Trained Models](#trained-models)
 - [Results](#results)
 - [Usage](#usage)
 - [Sources and References](#sources-and-references)
-- [Citation](#citation)
 - [License](#license)
 
 ## Project Overview
-In the realm of cybersecurity, significant efforts are focused on safeguarding computing systems from digital threats, which are increasingly prevalent today. In the context of machine learning, adversarial attacks pose a unique challenge by intentionally manipulating input data to deceive models. This altered data, crafted to appear legitimate, causes models to make incorrect predictions. Medical imaging systems, like many others, are particularly susceptible to such adversarial attacks, underscoring the critical need to strengthen the resilience of these models against such vulnerabilities.
+In the cyber security world, efforts are made to protect computing systems from digital attacks which are an emerging thread nowadays. In machine learning, attackers employ Adversarial machine learning, a method designed to trick models using decieving data. This deceptive data is fed into the models as input, causing classifiers to make incorrect classifications. We can see that in [reference [1]](https://arxiv.org/abs/1907.10456), medical images are vulnerable to adversarial attacks. Acknowledging this vulnerability emphasizes the importance of enhancing the model's resilience.
 
 In this project, we aim to design a robust model for detecting and classifying Alzheimer disease using MRI brain images. The model simulates a radiologist's diagnostic process by classifying images into four severity levels. We evaluate and compare several well-known unsupervised pre-trained models for classification tasks. Then, we train and evaluate these models under adversarial attacks, which can significantly reduce model's performance. By combining the models, we aim to create an ensemble, a unified and robust model that maximizes resilience against adversarial attacks while maintaining high classification performance. 
 
 The project includes the following steps:
 
-1. **Transfer Learning:** We used transfer learning to fine-tune and extract features from three well-known unsupervised pre-trained models to perform well on our specific task: DINOv2, ResNet34, and EfficientNet-B0. 
+1. **Transfer Learning:** We used transfer learning to fine-tune and extract features from three well-known unsupervised pre-trained models to perform well on our specific task: **DINOv2**, **ResNet34**, and **EfficientNet-B0**. 
 
-2. **Adversarial Attacks Implementation:** We performed two adversarial attacks on each one of the models: Fast Gradient Sign Method (FGSM) and Projected Gradient Descent (PGD). 
+2. **Adversarial Attacks Implementation:** We performed two adversarial attacks on each one of the models: Fast Gradient Sign Method (FGSM) and Projected Gradient Descent (PGD) which were found to be effective attacks based on the findings in [reference  [6]](https://arxiv.org/abs/2303.14133).
 
-3. **Adversarial Training:** To enhance model robustness, we trained these models with adversarial input, focusing particularly on the PGD attack. 
+3. **Adversarial Training:** To enhance model robustness, we trained these models with adversarial input, focusing particularly on the PGD attack as of [reference [7]](https://arxiv.org/abs/2303.14133) recommendation.
 
 4. **Ensemble Models:** Finally, we combined these three models using a voting approach to create a robust model, without affecting performance. 
 
@@ -65,10 +64,11 @@ The project is implemented in Python using the PyTorch framework, which allows u
 | Directory Name | Content |
 |----------------|---------|
 | `assets` | Contains images for each model, including confusion matrices, loss curves, and accuracy curves. |
+| `checkpoints` | In this dir, the best optuna parameters are saved under `optuna_params` dir for future training. In addition, model training checkpoints are saved here under the path: `name_of_model/checkpoint_information`  |
 | `dataset` | Contains two sub-directories: `raw_dataset` with the original raw data, and `dataset_variables` with processed dataset splitted into train, validation and test sets. |
-| `env` | Contains the project environment configuration files for setting up the required dependencies. |
-| `models` | Contains all models training notebooks. |
-| `utils` | Contains utility scripts. |
+| `env` | Holds the project environment configuration file (`project_env.yaml`) and requirements file(`requirements.txt`) for setting up dependencies with different installation methods.  |
+| `models` | Contains all model's training notebooks. the `results.ipynb` notebook and the `model_ensemble.ipynb` notebook are also included.|
+| `utils` | Contains utility flies including `optuna_search.py` for hyperparameter optimization, `utils_funcs.py` with general helper functions, and `grad_cam.py` for generating Grad-CAM visualizations. |
 
 ## Files In The Repository
 
@@ -86,7 +86,7 @@ The project is implemented in Python using the PyTorch framework, which allows u
 | `models/*_model_atk.ipynb` | Adversarial training model-specific notebook (e.g. `resnet_model_atk.ipynb`). Loads a pre-trained model, applies adversarial attacks, and trains the model under these attacks. |
 
 
-## Environment Installation
+## Installation
 
 #### General Prerequisites
 
@@ -154,6 +154,9 @@ We used a pre-processed dataset of 11,519 axial MRI brain images: 6,400 images f
 The dataset was split according to the train-validation-test methodology: the train set contains 8,192 real and synthetic images, the validation set contains 2,048 real and synthetic images and the test set contains 1,279 real images only. We resized the images into 224x224 pixels to match the input size required for the pre-trained models.
 
 ## Trained Models
+
+* We provide pre-trained checkpoints for the [dataset](https://www.kaggle.com/datasets/lukechugh/best-alzheimer-mri-dataset-99-accuracy) we used: the normal version and the under attack version. All model checkpoints should be placed inside the `/checkpoints` directory.
+* For each model, the optuna parameters that were used for the training are also avaialble in a **json** file. In order to use the json file, place it under `/checkpoints/optuna_params`
 
 | Model Type                               | Google Drive Link                                                                                | Optuna Params                                                                                |
 |------------------------------------------|-------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------|
@@ -249,38 +252,6 @@ This function will show the correct labels and the adversarial classification of
 [6] Zhang, H., Li, Y., & Chen, X. (2023). Adversarial Attack and Defense for Medical Image Analysis: Methods and Applications. [arXiv:2308.14597](https://arxiv.org/abs/2308.14597)
 
 [7] Madry, A., Makelov, A., Schmidt, L., Tsipras, D., & Vladu, A. (2018). Towards Deep Learning Models Resistant to Adversarial Attacks. [arXiv:1706.06083](https://arxiv.org/abs/1706.06083)
-
-## Citation
-```
-@misc{jacobgilpytorchcam,
-  title={PyTorch library for CAM methods},
-  author={Jacob Gildenblat and contributors},
-  year={2021},
-  publisher={GitHub},
-  howpublished={\url{https://github.com/jacobgil/pytorch-grad-cam}},
-}
-```
-
-```
-@misc{oquab2023dinov2,
-  title={DINOv2: Learning Robust Visual Features without Supervision},
-  author={Oquab, Maxime and Darcet, Timothée and Moutakanni, Theo and Vo, Huy V. and Szafraniec, Marc and Khalidov, Vasil and Fernandez, Pierre and Haziza, Daniel and Massa, Francisco and El-Nouby, Alaaeldin and Howes, Russell and Huang, Po-Yao and Xu, Hu and Sharma, Vasu and Li, Shang-Wen and Galuba, Wojciech and Rabbat, Mike and Assran, Mido and Ballas, Nicolas and Synnaeve, Gabriel and Misra, Ishan and Jegou, Herve and Mairal, Julien and Labatut, Patrick and Joulin, Armand and Bojanowski, Piotr},
-  journal={arXiv:2304.07193},
-  year={2023}
-}
-```
-
-```
-@inproceedings{akiba2019optuna,
-  title={{O}ptuna: A Next-Generation Hyperparameter Optimization Framework},
-  author={Akiba, Takuya and Sano, Shotaro and Yanase, Toshihiko and Ohta, Takeru and Koyama, Masanori},
-  booktitle={The 25th ACM SIGKDD International Conference on Knowledge Discovery \& Data Mining},
-  pages={2623--2631},
-  year={2019}
-}
-```
-
-
 
 ## License
 
