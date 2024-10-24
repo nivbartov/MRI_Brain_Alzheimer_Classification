@@ -5,14 +5,14 @@
 </h1>
 
 <div align="center">
-    <p><strong>This project is a part of the EE046211 Deep Learning course at the Technion.</strong></p>
+    <p><strong>This project is part of the EE046211 Deep Learning course at the Technion.</strong></p>
 </div>
 
 
 <h4 align="center">
     Dor Lerman:
     <a href="https://www.linkedin.com/in/..."><img src="assets/icons/Linkedin_icon_readme.png" width="30" height="30"/></a>
-    <a href="https://github.com/dorlerman"><img src="assets/icons/GitHub_icon_readme.png" width="30" height="30"/></a>
+    <a href="https://github.com/dorlerman80"><img src="assets/icons/GitHub_icon_readme.png" width="30" height="30"/></a>
 </h4>
 
 <h4 align="center">
@@ -34,7 +34,7 @@
 - [Project Overview](#project-overview)
 - [Repository Structure](#repository-structure)
 - [Files In The Repository](#files-in-the-repository)
-- [Installation](#environment-installation)
+- [Installation](#installation)
 - [Dataset](#dataset)
 - [Trained Models](#trained-models)
 - [Results](#results)
@@ -43,19 +43,19 @@
 - [License](#license)
 
 ## Project Overview
-In the cyber security world, efforts are made to protect computing systems from digital attacks which are an emerging thread nowadays. In machine learning, attackers employ Adversarial machine learning, a method designed to trick models using decieving data. This deceptive data is fed into the models as input, causing classifiers to make incorrect classifications. We can see that in [reference [1]](https://arxiv.org/abs/1907.10456), medical images are vulnerable to adversarial attacks. Acknowledging this vulnerability emphasizes the importance of enhancing the model's resilience.
+In the realm of cyber security, efforts are made to protect computing systems from digital attacks, which are an emerging threat nowadays. In machine learning, attackers develop aversarial attacks that are designed to trick models using decieving data. This deceptive data is given to the models as an input, causing classifiers to make incorrect classifications. Particularly, medical images are vulnerable to these adversarial attacks[<sup>[1]</sup>](https://arxiv.org/abs/1907.10456). Acknowledging this vulnerability emphasizes the importance of enhancing the model's resilience.
 
-In this project, we aim to design a robust model for detecting and classifying Alzheimer disease using MRI brain images. The model simulates a radiologist's diagnostic process by classifying images into four severity levels. We evaluate and compare several well-known unsupervised pre-trained models for classification tasks. Then, we train and evaluate these models under adversarial attacks, which can significantly reduce model's performance. By combining the models, we aim to create an ensemble, a unified and robust model that maximizes resilience against adversarial attacks while maintaining high classification performance. 
+In this project, we aim to design a robust model for detecting and classifying Alzheimer disease using MRI brain images. The model simulates a radiologist's diagnostic process by classifying images into four severity levels. We evaluate and compare several well-known unsupervised pre-trained models for classification tasks. Then, we train and evaluate these models under adversarial attacks, which can significantly reduce model's performance. By combining the models, we aim to create an ensemble, a unified and robust model that maximizes resilience against adversarial attacks while maintaining high classification performance.
 
 The project includes the following steps:
 
-1. **Transfer Learning:** We used transfer learning to fine-tune and extract features from three well-known unsupervised pre-trained models to perform well on our specific task: **DINOv2**, **ResNet34**, and **EfficientNet-B0**. 
+1. **Transfer Learning:** We used transfer learning to fine-tune and extract features from three well-known unsupervised pre-trained models to perform well on our specific task: DINOv2, ResNet34 and EfficientNet-B0.
 
-2. **Adversarial Attacks Implementation:** We performed two adversarial attacks on each one of the models: Fast Gradient Sign Method (FGSM) and Projected Gradient Descent (PGD) which were found to be effective attacks based on the findings in [reference  [6]](https://arxiv.org/abs/2303.14133).
+2. **Adversarial Attacks Implementation:** We performed two adversarial attacks on each one of the models: Fast Gradient Sign Method (FGSM) and Projected Gradient Descent (PGD), which were found to be effective attacks[<sup>[2]</sup>](https://arxiv.org/abs/2303.14133).
 
-3. **Adversarial Training:** To enhance model robustness, we trained these models with adversarial input, focusing particularly on the PGD attack as of [reference [7]](https://arxiv.org/abs/2303.14133) recommendation.
+4. **Adversarial Training:** To enhance model robustness, we trained these models with adversarial input, focusing particularly on the PGD attack[<sup>[3]</sup>](https://arxiv.org/abs/2303.14133).
 
-4. **Ensemble Models:** Finally, we combined these three models using a voting approach to create a robust model, without affecting performance. 
+5. **Ensemble Models:** Finally, we combined these three models using a voting approach to create a robust model, without affecting performance.
 
 The project is implemented in Python using the PyTorch framework, which allows us to build and train the models efficiently throughout these steps.
 
@@ -64,11 +64,11 @@ The project is implemented in Python using the PyTorch framework, which allows u
 | Directory Name | Content |
 |----------------|---------|
 | `assets` | Contains images for each model, including confusion matrices, loss curves, and accuracy curves. |
-| `checkpoints` | In this dir, the best optuna parameters are saved under `optuna_params` dir for future training. In addition, model training checkpoints are saved here under the path: `name_of_model/checkpoint_information`  |
+| `checkpoints` | An empty directory for saving notebook's output: Optuna hyperparameters and trained models. |
 | `dataset` | Contains two sub-directories: `raw_dataset` with the original raw data, and `dataset_variables` with processed dataset splitted into train, validation and test sets. |
-| `env` | Holds the project environment configuration file (`project_env.yaml`) and requirements file(`requirements.txt`) for setting up dependencies with different installation methods.  |
-| `models` | Contains all model's training notebooks. the `results.ipynb` notebook and the `model_ensemble.ipynb` notebook are also included.|
-| `utils` | Contains utility flies including `optuna_search.py` for hyperparameter optimization, `utils_funcs.py` with general helper functions, and `grad_cam.py` for generating Grad-CAM visualizations. |
+| `env` | Contains the project environment configuration file and the requirements file. |
+| `models` | Contains all model's training notebooks. |
+| `utils` | Contains utility flies including `optuna_search.py` for hyperparameter optimization, `utils_funcs.py` with general helper functions, and `Grad_cam.py` for generating Grad-CAM visualizations. |
 
 ## Files In The Repository
 
@@ -149,14 +149,13 @@ pip install -r env/requirements.txt
 
 ## Dataset
 
-We used a pre-processed dataset of 11,519 axial MRI brain images: 6,400 images from real patients and 5,119 synthetic images that were developed to rectify the class imbalance of the original dataset. The images are classified into four categories: "Non Demented", "Very Mild Demented", "Mild Demented", and "Moderate Demented". Each category had 100, 70, 28, and 2 patients, respectively, and each patient's brain was sliced into 32 horizontal axial MRIs. The images have a resolution of 128x128 pixels and are in the “.jpg” format. All images have been pre-processed to remove the skull.
+We used a pre-processed [dataset](https://www.kaggle.com/datasets/lukechugh/best-alzheimer-mri-dataset-99-accuracy) of 11,519 axial MRI brain images: 6,400 images from real patients and 5,119 synthetic images that were developed to rectify the class imbalance of the original dataset. The images are classified into four categories: "Non Demented", "Very Mild Demented", "Mild Demented", and "Moderate Demented". Each category had 100, 70, 28, and 2 patients, respectively, and each patient's brain was sliced into 32 horizontal axial MRIs. The images have a resolution of 128x128 pixels and are in the “.jpg” format. All images have been pre-processed to remove the skull.
 
 The dataset was split according to the train-validation-test methodology: the train set contains 8,192 real and synthetic images, the validation set contains 2,048 real and synthetic images and the test set contains 1,279 real images only. We resized the images into 224x224 pixels to match the input size required for the pre-trained models.
 
 ## Trained Models
 
-* We provide pre-trained checkpoints for the [dataset](https://www.kaggle.com/datasets/lukechugh/best-alzheimer-mri-dataset-99-accuracy) we used: the normal version and the under attack version. All model checkpoints should be placed inside the `/checkpoints` directory.
-* For each model, the optuna parameters that were used for the training are also avaialble in a **json** file. In order to use the json file, place it under `/checkpoints/optuna_params`
+We provide the files of our trained models, as well as the hyperparameters used for the training. These files can be loaded to the notebooks as mentioned in the next section.
 
 | Model Type                               | Google Drive Link                                                                                | Optuna Params                                                                                |
 |------------------------------------------|-------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------|
@@ -171,55 +170,9 @@ The dataset was split according to the train-validation-test methodology: the tr
 
 ## Usage
 
-In this repository, you have the following usage options:
+In order to train a specific model, open one of the notebooks `*_model.ipynb`. You can load the backbone of your required model, choose the hyperparameters using Optuna, define data augmentations and then train the model. If you are interested in transfer learning, set `requires_grad = False` for layers you want to freeze. Otherwise, set `requires_grad = True` for layers you want to fine-tune. Notice that all models structs exist in `def_models.py` and you can add there new models of your own. It is possible to load a trained model using `load_existing_params = True` or to load existing hyperparameters using `load_existing_hyperparams = True`.
 
-#### Train a specific model
-
-1. copy one of the models notebook **`dino_v2_model.ipynb`** , **`efficienetnet_model.ipynb`** ,**`resnet_model.ipynb`**. rename the new notebook to be **`*_model.ipynb`** where * is the name of your backbone.
-2. follow up the notebooks structure:
-  2.1. define the models architecture accordinglly. add the architecture to the file **`models/def_models.py`**
-  2.2. If you are interested in transfer learning, set the **`requires_grad = False`** for layers you want to freeze. Otherwise, **`requires_grad = True`** for layers you want to fine tune.
-  2.3. set **`load_existing_hyperparams = False`** if you want to perform the optuna search for the specific architecture and constraints of the model. define the number of epochs and trials for the search process as input parameters to  the function.
-  2.4. define the number of epochs for the training.
-  2.5. define the augmentations if needed.
-  2.6. in the training process you have 2 options:
-    *  Train from scratch. For this option , set the **`load_existing_params = False`**. 
-    * reload an exisiting model. you can reload an existing model  that was previously trained and choose to train it or not.  Loading an exisiting model set **`load_existing_params =  True`**. for training a loaded model, set the **`train_loaded_model = True`** in addition.
-  2.7. After the training process, the confusion matrix, loss curve and accuracy curve are saved under the `assets/*` when  `*` is the models name.
-
-#### Adversarial attacks: training and attacking
-**Note:** This option can be performed only if you have a **pretrained model** with a defined architecture under the **`models/def_models.py`** file.
-
-Here are the common steps for both options:
-1. copy one of the models notebook **`dino_v2_model_atk.ipynb`** , **`efficienetnet_model_atk.ipynb`** ,**`resnet_model_atk.ipynb`**. rename the new notebook to be **`*_model_atk.ipynb`** where * is the name of your backbone.
-2. set the models definition from the training process under no attacks.
-3. set **`load_existing_hyperparams = True`** if you want to use the previous optuna hyper-parameters that you found in the first training process under no attacks. This is the recommended approach. Otherwise you can set **`load_existing_hyperparams = False`** and make a new optuna search.
-4. Load the pretrained model. set the **`pretrained_model_path`** parameter to the path of your pretrained model.
-
-##### Perform attacks
-
-* **FGSM attack** -  define the `Epsilon` value you want to perform the attack with. It is recommended to set a small number of `Epsilon` if you are limited with resources.
-plot the adversarial examples using the `utils_funcs.plot_adversarial_examples` function. 
-here is how:
-`utils_funcs.plot_adversarial_examples(epsilons, examples, attack_name='fgsm', parameter_type = 'Epsilon')`.
-This function will show the correct labels and the adversarial classification of the model for each `Epsilon`.
-
-* **PGD attack** -  first, define the `Epsilon` and `num_iter` values you want to perform the attack with.Then, define the `Alpha` values.They can be smaller than `Epsilon/num_iter`(the `Epsilon` defines the radious for petubations) only.
-plot the adversarial examples using the `utils_funcs.plot_adversarial_examples` function. 
-here is how:
-`utils_funcs.plot_adversarial_examples(alphas, examples , attack_name='pgd', parameter_type = 'Alpha')`.
-This function will show the correct labels and the adversarial classification of the model for each `Alpha`.
-
-
-##### Adversarial attacks training
-
-1. define the following parameters : `Epsilon`, `num_iter`, `Alpha`(see contraints under [PGD attack](#pgd-attack)), `adv_weight`, `num_epochs`.
-2. define the number of epochs for the training.
-3. define the augmentations if needed.
-4. in the training process you have 2 options:
-    *  Train from scratch. For this option , set the  **`load_existing_params = False`**. 
-    * reload an exisiting model. you can reload an  existingmodel  that was previously trained and choose to   train itor not.  Loading an exisiting model   set**`load_existing_params = True`**. for training a   loadedmodel, set the **`train_loaded_model = True`**  inaddition.
-5. After the training process, the confusion matrix, loss curve and accuracy curve are saved under the `assets/*` when  `*` is the models name.
+Then, open one of the notebooks `*_model_atk.ipynb` for running the model under adversarial attacks. It is possible to use FGSM, PGD or to implement another attack of your own. Choose the required parameters for your attacks, load your model and train it under adversarial attacks. All notebooks provide confusion matrices, loss and accuracy curves to analyze the results (these are saved into `assets` directory).
 
 ## Sources and References
 
@@ -235,23 +188,22 @@ This function will show the correct labels and the adversarial classification of
 
 [5] Hoki. (2020). Torchattack: PyTorch adversarial attack library. GitHub repository. [https://github.com/Harry24k/torchattacks](https://github.com/Harry24k/torchattacks)
 
-
 #### References
 
 [1] Madry, A., Makelov, A., Schmidt, L., Tsipras, D., & Vladu, A. (2017). Understanding adversarial attacks on deep learning based medical image analysis systems. [arXiv:1907.10456](https://arxiv.org/abs/1907.10456)
 
-[2] Zhang, Y., & Yu, L. (2023). Adversarial attacks on foundational vision models. [arXiv:2308.14597](https://arxiv.org/abs/2308.14597)
+[2] Zhang, H., Li, Y., & Chen, X. (2023). Adversarial Attack and Defense for Medical Image Analysis: Methods and Applications. [arXiv:2308.14597](https://arxiv.org/abs/2308.14597)
 
-[3] Chen, X., Zhang, H., & Li, Y. (2022). Exploring adversarial attacks and defenses in vision transformers trained with DINO. [arXiv:2206.06761](https://arxiv.org/abs/2206.06761)
+[3] Madry, A., Makelov, A., Schmidt, L., Tsipras, D., & Vladu, A. (2018). Towards Deep Learning Models Resistant to Adversarial Attacks. [arXiv:1706.06083](https://arxiv.org/abs/1706.06083)
 
-[4] Xie, L., & Wang, Z. (2023). DINOv2: Learning robust visual features without supervision. [arXiv:2304.07193](https://arxiv.org/abs/2304.07193)
+[4] Zhang, Y., & Yu, L. (2023). Adversarial attacks on foundational vision models. [arXiv:2308.14597](https://arxiv.org/abs/2308.14597)
 
+[5] Chen, X., Zhang, H., & Li, Y. (2022). Exploring adversarial attacks and defenses in vision transformers trained with DINO. [arXiv:2206.06761](https://arxiv.org/abs/2206.06761)
 
-[5] Tajbakhsh, N., Shin, J., Gurudu, S. R., & Hurst, R. T. (2022). What makes transfer learning work for medical images: Feature reuse & other factors. [arXiv:2203.01825](https://arxiv.org/abs/2203.01825)
+[6] Xie, L., & Wang, Z. (2023). DINOv2: Learning robust visual features without supervision. [arXiv:2304.07193](https://arxiv.org/abs/2304.07193)
 
-[6] Zhang, H., Li, Y., & Chen, X. (2023). Adversarial Attack and Defense for Medical Image Analysis: Methods and Applications. [arXiv:2308.14597](https://arxiv.org/abs/2308.14597)
+[7] Tajbakhsh, N., Shin, J., Gurudu, S. R., & Hurst, R. T. (2022). What makes transfer learning work for medical images: Feature reuse & other factors. [arXiv:2203.01825](https://arxiv.org/abs/2203.01825)
 
-[7] Madry, A., Makelov, A., Schmidt, L., Tsipras, D., & Vladu, A. (2018). Towards Deep Learning Models Resistant to Adversarial Attacks. [arXiv:1706.06083](https://arxiv.org/abs/1706.06083)
 
 ## License
 
