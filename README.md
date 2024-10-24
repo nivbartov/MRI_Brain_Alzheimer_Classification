@@ -53,7 +53,7 @@ The project includes the following steps:
 
 2. **Adversarial Attacks Implementation:** We performed two adversarial attacks on each one of the models: Fast Gradient Sign Method (FGSM) and Projected Gradient Descent (PGD), which were found to be effective attacks[<sup>[2]</sup>](https://arxiv.org/abs/2303.14133).
 
-4. **Adversarial Training:** To enhance model robustness, we trained these models with adversarial input, focusing particularly on the PGD attack[<sup>[3]</sup>](https://arxiv.org/abs/2303.14133).
+4. **Adversarial Training:** To enhance model robustness, we trained these models with adversarial input, focusing particularly on the PGD attack[<sup>[3]</sup>](https://arxiv.org/abs/1706.06083).
 
 5. **Ensemble Models:** Finally, we combined these three models using a voting approach to create a robust model, without affecting performance.
 
