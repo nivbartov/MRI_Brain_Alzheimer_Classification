@@ -209,8 +209,6 @@ def prepare_datasets(train_set, validation_set, test_set):
 
     return train_set, validation_set, test_set    
 
-import torch
-
 def ensemble_predict(models, weights, images, device):
     """
     Combines predictions from multiple models using a weighted average of the softmax outputs.
@@ -289,6 +287,72 @@ def calculate_ensemble_accuracy(models, weights, dataloader, device):
 
     ensemble_accuracy = total_correct / total_images * 100
     return ensemble_accuracy
+
+
+def calculate_ensemble_atk_accuracy(models, weights, dataloader, device, epsilon, alpha = 0.01, num_iter = 5, attack_type=None):
+    # Initialize accuracy counters
+    total_images = 0
+    total_correct = 0
+
+    for data in dataloader:
+        images, labels = data
+        images = images.to(device)
+        labels = labels.to(device)
+
+        # Reset final prediction to zero for ensemble
+        final_prediction = None
+
+        for model, weight in zip(models, weights):
+            # Clear CUDA cache to prevent memory overflow
+            torch.cuda.empty_cache()
+
+            model.eval()
+            model.to(device)
+
+            # Initialize the attack for each model inside the loop
+            if attack_type.lower() == 'fgsm':
+                attack = torchattacks.FGSM(model, eps=epsilon)
+            elif attack_type.lower() == 'pgd':
+                attack = torchattacks.PGD(model, eps=epsilon, alpha=alpha, steps=num_iter)
+            else:
+                raise ValueError(f"Unsupported attack type: {attack_type}. Choose 'fgsm' or 'pgd'.")
+
+            # Enable gradient calculation for adversarial attack
+            perturbed_images = attack(images, labels)
+
+            # Disable gradient tracking for the prediction part
+            with torch.no_grad():
+                outputs = model(perturbed_images)
+                
+                # Apply softmax to get probabilities
+                softmax_outputs = torch.nn.functional.softmax(outputs, dim=1)
+                
+                # Accumulate the weighted predictions
+                weighted_outputs = weight * softmax_outputs
+                
+                if final_prediction is None:
+                    final_prediction = weighted_outputs
+                else:
+                    final_prediction += weighted_outputs
+
+        # Get the class with the highest probability (predicted class)
+        _, predicted = torch.max(final_prediction.data, 1)
+
+        # Update counts for accuracy calculation
+        total_images += labels.size(0)
+        total_correct += (predicted == labels).sum().item()
+
+    # Calculate and return ensemble adversarial attack accuracy
+    ensemble_atk_accuracy = total_correct / total_images * 100
+
+    return ensemble_atk_accuracy
+
+
+
+
+
+
+
 
   
 
@@ -844,6 +908,7 @@ def adversarial_train_model(model, num_epochs, trainloader, validationloader, de
         
         if(curriculum_adv_train  and epoch % 8 == 1 and epoch != 1):
             steps = min(steps + 1, num_iter)
+            # print(f"changed the number of iterations for pgd to {steps} iterations")
         
         # Initialize the attack based on the attack_type
         if attack_type.lower() == 'fgsm':
