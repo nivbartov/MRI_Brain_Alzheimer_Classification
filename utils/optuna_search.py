@@ -38,7 +38,7 @@ def save_best_params(best_params, model_name, loss_value, base_dir='checkpoints/
 
   
 def define_model(trial, model_name, transfer_learning):
-    models = ['DINOv2', 'ResNet', 'EfficientNet']
+    models = ['DINOv2', 'ResNet', 'EfficientNet', 'DenseNet']
     
     if model_name not in models:
         raise ValueError(f"Model name {model_name} is not in the list of available models: {models}")
@@ -58,6 +58,7 @@ def define_model(trial, model_name, transfer_learning):
         
         # Create the DINOv2 model, passing the backbone
         model = model_class(DINOv2_backbone=dino_v2_model, output_channels=output_channels)
+    
     elif model_name == 'ResNet':
         # Load the ResNet backbone
         resnet_model = torchvision.models.resnet34(pretrained=True)
@@ -69,6 +70,7 @@ def define_model(trial, model_name, transfer_learning):
         
         # Create the ResNet model, passing the backbone
         model = model_class(ResNet_backbone=resnet_model, output_channels=output_channels)
+    
     elif model_name == 'EfficientNet':
         # Load the EfficientNet backbone
         efficientnet_model = torchvision.models.efficientnet_b0(pretrained=True)
@@ -80,6 +82,20 @@ def define_model(trial, model_name, transfer_learning):
 
         # Create the EfficientNet model, passing the backbone
         model = model_class(EfficientNet_backbone=efficientnet_model, output_channels=output_channels)
+    
+    elif model_name == 'DenseNet':
+        # Load the DenseNet backbone
+        densenet_model = torchvision.models.densenet169(pretrained=True)
+
+        # Freeze the DenseNet layers if using transfer learning
+        if transfer_learning:
+            for param in densenet_model.parameters():
+                param.requires_grad = True
+
+        # Create the DenseNet model, passing the backbone
+        model = model_class(DenseNet_backbone=densenet_model, output_channels=output_channels)
+
+    
     else:
         # Handle other model types (NaiveModel, NaiveModelAug) as needed
         model = model_class(input_channels=3, output_channels=output_channels)
@@ -213,7 +229,7 @@ def optuna_param_search(model_name, loss_criterion, num_epochs_for_experiments=1
     # make the study
     sampler = optuna.samplers.TPESampler()
     study = optuna.create_study(study_name="mri-alzhimer-classification", direction="maximize", sampler=sampler)
-    study.optimize(objective_with_args, n_trials=40)
+    study.optimize(objective_with_args, n_trials=30)
 
     # get the purned and completed trials
     pruned_trials = [t for t in study.trials if t.state == optuna.trial.TrialState.PRUNED]
