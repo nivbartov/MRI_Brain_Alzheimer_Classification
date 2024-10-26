@@ -53,9 +53,9 @@ The project includes the following steps:
 
 2. **Adversarial Attacks Implementation:** We performed two adversarial attacks on each one of the models: Fast Gradient Sign Method (FGSM) and Projected Gradient Descent (PGD), which were found to be effective attacks[<sup>[2]</sup>](https://arxiv.org/abs/2303.14133).
 
-4. **Adversarial Training:** To enhance model robustness, we trained these models with adversarial input, focusing particularly on the PGD attack[<sup>[3]</sup>](https://arxiv.org/abs/1706.06083).
+4. **Adversarial Training:** To enhance model robustness, we trained these models with adversarial examples, using the PGD attack[<sup>[3]</sup>](https://arxiv.org/abs/1706.06083).A weighted cross-entropy loss combined the standard loss with an adversarial component scaled by the adv_weight parameter. For models that required a different adversarial training approach, we applied Curriculum Adversarial Training[<sup>[4]</sup>](https://arxiv.org/abs/1805.04807).
 
-5. **Ensemble Models:** Finally, we combined these three models using a voting approach to create a robust model, without affecting performance.
+5. **Ensemble Models:** Finally, we combined these three models using weighted ensemble approach to create a robust model, without affecting performance.
 
 The project is implemented in Python using the PyTorch framework, which allows us to build and train the models efficiently throughout these steps.
 
@@ -160,11 +160,11 @@ We provide the files of our trained models, as well as the hyperparameters used 
 | Model Type                               | Google Drive Link                                                                                | Optuna Params                                                                                |
 |------------------------------------------|-------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------|
 | DINOv2                                   | [Download .pth file](https://drive.google.com/file/d/1jABpNVpMTrehBhL6ilm2e0gTx2C7fQyd/view?usp=drive_link)      | [Download JSON file](https://drive.google.com/file/d/1EyuLRh44TgUEpMn5ErN77XdZEmFZ8MNd/view?usp=drive_link) |
-| DINOv2 with adversarial attacks          | [Download .pth file](....)       | [Download JSON file](https://drive.google.com/file/d/1EyuLRh44TgUEpMn5ErN77XdZEmFZ8MNd/view?usp=drive_link) | 
-| Resnet34                                 | [Download .pth file](.....)       | [Download JSON file](....) | 
-| Resnet34 with adversarial attacks        | [Download .pth file](....)       | [Download JSON file](....) | 
+| DINOv2 with adversarial attacks          | [Download .pth file](https://drive.google.com/file/d/1kS40XoH3PYkCkNTUJ-Wc3N7iYhHnrPDz/view?usp=drive_link)       | [Download JSON file](https://drive.google.com/file/d/1EyuLRh44TgUEpMn5ErN77XdZEmFZ8MNd/view?usp=drive_link) | 
+| Resnet34                                 | [Download .pth file](https://drive.google.com/file/d/1f4WCkcKVt7FLxv7hUNJgPGbOUJ_4tIoy/view?usp=drive_link)       | [Download JSON file](https://drive.google.com/file/d/1YqA7IwmBaYVneSMh4Gi_RhUTiJxZwbAj/view?usp=drive_link) | 
+| Resnet34 with adversarial attacks        | [Download .pth file](https://drive.google.com/file/d/1tDKBQEXTm0mY05oycfMrKSlAINWA8qbD/view?usp=drive_link)       | [Download JSON file](https://drive.google.com/file/d/1YqA7IwmBaYVneSMh4Gi_RhUTiJxZwbAj/view?usp=drive_link) | 
 | Efficientnet-B0                          | [Download .pth file](https://drive.google.com/file/d/1SuudU3uv2FCtJiD1XKdfpAPaMnk70Qhw/view?usp=drive_link)       | [Download JSON file](https://drive.google.com/file/d/1Bha09qvH3MlP112wm-j9j_NqijC5nPFL/view?usp=drive_link) | 
-| Efficientnet-B0 with adversarial attacks | [Download .pth file](.....)        | [Download JSON file](https://drive.google.com/file/d/1Bha09qvH3MlP112wm-j9j_NqijC5nPFL/view?usp=drive_link) | 
+| Efficientnet-B0 with adversarial attacks | [Download .pth file](https://drive.google.com/file/d/14SlvfDhUDeCw8kxulTuVMP-7FphWQdMJ/view?usp=drive_link)        | [Download JSON file](https://drive.google.com/file/d/1Bha09qvH3MlP112wm-j9j_NqijC5nPFL/view?usp=drive_link) | 
 
 ## Results
 
@@ -172,7 +172,10 @@ We provide the files of our trained models, as well as the hyperparameters used 
 
 In order to train a specific model, open one of the notebooks `*_model.ipynb`. You can load the backbone of your required model, choose the hyperparameters using Optuna, define data augmentations and then train the model. If you are interested in transfer learning, set `requires_grad = False` for layers you want to freeze. Otherwise, set `requires_grad = True` for layers you want to fine-tune. Notice that all models structs exist in `def_models.py` and you can add there new models of your own. It is possible to load a trained model using `load_existing_params = True` or to load existing hyperparameters using `load_existing_hyperparams = True`.
 
-Then, open one of the notebooks `*_model_atk.ipynb` for running the model under adversarial attacks. It is possible to use FGSM, PGD or to implement another attack of your own. Choose the required parameters for your attacks, load your model and train it under adversarial attacks. All notebooks provide confusion matrices, loss and accuracy curves to analyze the results (these are saved into `assets` directory).
+Alternatively, to run the model under adversarial attacks, open one of the `*_model_atk.ipynb` notebooks.Here, you can apply attacks such as FGSM, PGD, or implement a custom attack. Select the parameters for your attacks, load your model, and train it under adversarial conditions.
+
+All notebooks provide confusion matrices, loss and accuracy curves to analyze the results (these are saved into `assets/<name_of_model>` directory).
+During the training process, every 5 epochs the model's state and statistics are saved under: `checkpoints/<name_of_model_with_time_stamp>/<name_of_model_with_loss_statistics>`
 
 ## Sources and References
 
@@ -196,7 +199,7 @@ Then, open one of the notebooks `*_model_atk.ipynb` for running the model under 
 
 [3] Madry, A., Makelov, A., Schmidt, L., Tsipras, D., & Vladu, A. (2018). Towards Deep Learning Models Resistant to Adversarial Attacks. [arXiv:1706.06083](https://arxiv.org/abs/1706.06083)
 
-[4] Zhang, Y., & Yu, L. (2023). Adversarial attacks on foundational vision models. [arXiv:2308.14597](https://arxiv.org/abs/2308.14597)
+[4] Cai, Q.-Z., Du, M., Liu, C., & Song, D. (2018). Curriculum Adversarial Training. [arXiv:1805.04807](https://arxiv.org/abs/1805.04807)
 
 [5] Chen, X., Zhang, H., & Li, Y. (2022). Exploring adversarial attacks and defenses in vision transformers trained with DINO. [arXiv:2206.06761](https://arxiv.org/abs/2206.06761)
 
