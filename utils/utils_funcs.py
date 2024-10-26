@@ -900,7 +900,7 @@ def adversarial_train_model(model, num_epochs, trainloader, validationloader, de
     # Create a session directory for saving the model
     session_dir = create_training_session(model_name)
     
-    steps = 2 if(curriculum_adv_train) else num_iter
+    steps = 3 if(curriculum_adv_train) else num_iter
 
     for epoch in range(1, num_epochs + 1):
         
