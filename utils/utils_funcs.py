@@ -247,6 +247,9 @@ def ensemble_predict(models, weights, images, device):
     return final_prediction
 
 
+
+
+
 def calculate_ensemble_accuracy(models, weights, dataloader, device):
     """
     Evaluates the accuracy of the ensemble model on a given dataloader.
@@ -647,6 +650,69 @@ def load_model(model, optimizer, model_path):
     
     print(f"Loaded model from {model_path} (epoch: {epoch}, loss: {loss:.4f})")
     return epoch, loss
+
+
+def plot_ensemble_confusion_matrix(models, weights, testloader, class_names, device, model_name="Ensemble"):
+    """
+    Plots and saves the normalized confusion matrix for an ensemble of models.
+    
+    Args:
+    models: list of models to ensemble.
+    weights: list of weights for each model in the ensemble.
+    testloader: DataLoader object for the test dataset.
+    class_names: list of class names for display in the confusion matrix.
+    device: device to run the models on (CPU or CUDA).
+    model_name: name for the saved confusion matrix plot directory.
+    """
+    # Set all models to evaluation mode and move them to the correct device
+    for model in models:
+        model.eval()
+        model.to(device)
+
+    all_preds = []
+    all_labels = []
+
+    with torch.no_grad():
+        for data in testloader:
+            images, labels = data
+            images = images.to(device)
+            labels = labels.to(device)
+
+            # Get ensemble prediction
+            final_prediction = ensemble_predict(models, weights, images, device)
+            _, predicted = torch.max(final_prediction, 1)
+
+            # Collect all predictions and true labels
+            all_preds.extend(predicted.cpu().numpy())
+            all_labels.extend(labels.cpu().numpy())
+
+    # Compute the normalized confusion matrix
+    cm = confusion_matrix(all_labels, all_preds, normalize='true')
+
+    # Create the directory to save the confusion matrix if it doesn't exist
+    save_dir = os.path.join('assets', model_name)
+    os.makedirs(save_dir, exist_ok=True)
+
+    # Plot the normalized confusion matrix
+    plt.figure(figsize=(8, 6))
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=class_names)
+    disp.plot(cmap=plt.cm.Blues, values_format=".2f")
+
+    # Adjust title and labels
+    plt.title(f'Normalized Confusion Matrix', fontsize=16, pad=20)
+    plt.xlabel('Predicted label', fontsize=14)
+    plt.ylabel('True label', fontsize=14)
+
+    # Spread out the class names
+    plt.xticks(rotation=45, ha='right')
+    plt.yticks(rotation=0)
+
+    plt.tight_layout()
+
+    # Save the plot to the specified directory
+    plt.savefig(os.path.join(save_dir, 'ensemble_confusion_matrix.png'))
+    plt.show()
+    plt.close()
 
 def plot_normalized_confusion_matrix(testloader, model, class_names, device, model_name):
     model.eval()  
