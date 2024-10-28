@@ -22,10 +22,14 @@
 </h4>
 
 
-<h4 align="center">
-    <a href="https://colab.research.google.com/...."><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
-    <a href="https://www.youtube.com/watch?v=YOUR_VIDEO_ID" target="_blank"><img src="https://img.shields.io/badge/Watch%20Video-YouTube-red?logo=youtube" alt="Watch Video on YouTube"/></a>
-</h4>
+<p align="center">
+  <a href="https://colab.research.google.com/github/nivbartov/MRI_Brain_Alzheimer_Classification/blob/main/models/results.ipynb">
+    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open results notebook"/>
+  </a>
+  <a href="https://www.youtube.com/watch?v=YOUR_VIDEO_ID" target="_blank">
+    <img src="https://img.shields.io/badge/Watch%20Video-YouTube-red?logo=youtube" alt="Watch Video on YouTube"/>
+  </a>
+</p>
 
 
 
@@ -160,11 +164,11 @@ We provide the files of our trained models, as well as the hyperparameters used 
 | Model Type                               | Google Drive Link                                                                                | Optuna Params                                                                                |
 |------------------------------------------|-------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------|
 | DINOv2                                   | [Download .pth file](https://drive.google.com/file/d/1jABpNVpMTrehBhL6ilm2e0gTx2C7fQyd/view?usp=drive_link)      | [Download JSON file](https://drive.google.com/file/d/1EyuLRh44TgUEpMn5ErN77XdZEmFZ8MNd/view?usp=drive_link) |
-| DINOv2 with adversarial attacks          | [Download .pth file](https://drive.google.com/file/d/1kS40XoH3PYkCkNTUJ-Wc3N7iYhHnrPDz/view?usp=drive_link)       | [Download JSON file](https://drive.google.com/file/d/1EyuLRh44TgUEpMn5ErN77XdZEmFZ8MNd/view?usp=drive_link) | 
+| DINOv2 with adversarial attacks          | [Download .pth file](https://drive.google.com/file/d/1kS40XoH3PYkCkNTUJ-Wc3N7iYhHnrPDz/view?usp=drive_link)       | [Download JSON file](https://drive.google.com/file/d/1APagdTEOdTKxP4b-d7ha6dohBSdXZtU0/view?usp=drive_link) | 
 | Resnet34                                 | [Download .pth file](https://drive.google.com/file/d/1f4WCkcKVt7FLxv7hUNJgPGbOUJ_4tIoy/view?usp=drive_link)       | [Download JSON file](https://drive.google.com/file/d/1YqA7IwmBaYVneSMh4Gi_RhUTiJxZwbAj/view?usp=drive_link) | 
-| Resnet34 with adversarial attacks        | [Download .pth file](https://drive.google.com/file/d/1tDKBQEXTm0mY05oycfMrKSlAINWA8qbD/view?usp=drive_link)       | [Download JSON file](https://drive.google.com/file/d/1YqA7IwmBaYVneSMh4Gi_RhUTiJxZwbAj/view?usp=drive_link) | 
+| Resnet34 with adversarial attacks        | [Download .pth file](https://drive.google.com/file/d/1tDKBQEXTm0mY05oycfMrKSlAINWA8qbD/view?usp=drive_link)       | [Download JSON file](https://drive.google.com/file/d/1cR0OhtmPFjiyqRkifCl4h8s_gSXUGcvE/view?usp=drive_link) | 
 | Efficientnet-B0                          | [Download .pth file](https://drive.google.com/file/d/1SuudU3uv2FCtJiD1XKdfpAPaMnk70Qhw/view?usp=drive_link)       | [Download JSON file](https://drive.google.com/file/d/1Bha09qvH3MlP112wm-j9j_NqijC5nPFL/view?usp=drive_link) | 
-| Efficientnet-B0 with adversarial attacks | [Download .pth file](https://drive.google.com/file/d/14SlvfDhUDeCw8kxulTuVMP-7FphWQdMJ/view?usp=drive_link)        | [Download JSON file](https://drive.google.com/file/d/1Bha09qvH3MlP112wm-j9j_NqijC5nPFL/view?usp=drive_link) | 
+| Efficientnet-B0 with adversarial attacks | [Download .pth file](https://drive.google.com/file/d/14SlvfDhUDeCw8kxulTuVMP-7FphWQdMJ/view?usp=drive_link)        | [Download JSON file](https://drive.google.com/file/d/1k2nigU0jFDCMz0TbEBUD6cUz_bS2bJFK/view?usp=drive_link) | 
 
 ## Results
 
