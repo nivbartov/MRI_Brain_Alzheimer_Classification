@@ -41,7 +41,6 @@
 - [Installation](#installation)
 - [Dataset](#dataset)
 - [Trained Models](#trained-models)
-- [Results](#results)
 - [Usage](#usage)
 - [Sources and References](#sources-and-references)
 - [License](#license)
@@ -170,8 +169,6 @@ We provide the files of our trained models, as well as the hyperparameters used 
 | Efficientnet-B0                          | [Download .pth file](https://drive.google.com/file/d/1SuudU3uv2FCtJiD1XKdfpAPaMnk70Qhw/view?usp=drive_link)       | [Download JSON file](https://drive.google.com/file/d/1Bha09qvH3MlP112wm-j9j_NqijC5nPFL/view?usp=drive_link) | 
 | Efficientnet-B0 with adversarial attacks | [Download .pth file](https://drive.google.com/file/d/14SlvfDhUDeCw8kxulTuVMP-7FphWQdMJ/view?usp=drive_link)        | [Download JSON file](https://drive.google.com/file/d/1k2nigU0jFDCMz0TbEBUD6cUz_bS2bJFK/view?usp=drive_link) | 
 
-## Results
-
 ## Usage
 
 In order to train a specific model, open one of the notebooks `*_model.ipynb`. You can load the backbone of your required model, choose the hyperparameters using Optuna, define data augmentations and then train the model. If you are interested in transfer learning, set `requires_grad = False` for layers you want to freeze. Otherwise, set `requires_grad = True` for layers you want to fine-tune. Notice that all models structs exist in `def_models.py` and you can add there new models of your own. It is possible to load a trained model using `load_existing_params = True` or to load existing hyperparameters using `load_existing_hyperparams = True`.
@@ -214,4 +211,4 @@ During the training process, every 5 epochs the model's state and statistics are
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](https://opensource.org/licenses/MIT) file for details.
+This project is licensed under the MIT License - see the `LICENSE.md` file for details.
