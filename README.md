@@ -26,7 +26,7 @@
   <a href="https://colab.research.google.com/github/nivbartov/MRI_Brain_Alzheimer_Classification/blob/main/models/results.ipynb">
     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open results notebook"/>
   </a>
-  <a href="https://www.youtube.com/watch?v=YOUR_VIDEO_ID" target="_blank">
+  <a href="https://youtu.be/F57_KVQ65NU" target="_blank">
     <img src="https://img.shields.io/badge/Watch%20Video-YouTube-red?logo=youtube" alt="Watch Video on YouTube"/>
   </a>
 </p>
