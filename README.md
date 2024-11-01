@@ -11,7 +11,7 @@
 
 <h4 align="center">
     Dor Lerman:
-    <a href="https://www.linkedin.com/in/..."><img src="assets/icons/Linkedin_icon_readme.png" width="30" height="30"/></a>
+    <a href="https://www.linkedin.com/in/dor-lerman-962481336/"><img src="assets/icons/Linkedin_icon_readme.png" width="30" height="30"/></a>
     <a href="https://github.com/dorlerman80"><img src="assets/icons/GitHub_icon_readme.png" width="30" height="30"/></a>
 </h4>
 
@@ -24,13 +24,12 @@
 
 <p align="center">
   <a href="https://colab.research.google.com/github/nivbartov/MRI_Brain_Alzheimer_Classification/blob/main/models/results.ipynb">
-    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open results notebook"/>
+    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open results in Colab"/>
   </a>
   <a href="https://youtu.be/F57_KVQ65NU" target="_blank">
     <img src="https://img.shields.io/badge/Watch%20Video-YouTube-red?logo=youtube" alt="Watch Video on YouTube"/>
   </a>
 </p>
-
 
 
 ## Table of Contents
@@ -120,17 +119,17 @@ The project is implemented in Python using the PyTorch framework, which allows u
 
 #### DINOv2 Specific Requirements
 
-| Library           | Version           |
-|-------------------|-------------------|
-| `torch`           | `== 2.0.0`        |
-| `torchvision`     | `== 0.15.0`       |
-| `omegaconf`       | `Latest`          |
-| `torchmetrics`    | `== 0.10.3`       |
-| `fvcore`          | `Latest`          |
-| `iopath`          | `Latest`          |
-| `submitit`        | `Latest`          |
-| `xformers`        | `== 0.0.18`       |
-| `cuml-cu11`       | `Latest`          |
+| Library           | Version             |
+|-------------------|---------------------|
+| `torch`           | `==2.0.0`           |
+| `torchvision`     | `==0.15.0`          |
+| `omegaconf`       | `>=2.3.0`           |
+| `torchmetrics`    | `==0.10.3`          |
+| `fvcore`          | `>=0.1.6`           |
+| `iopath`          | `>=0.1.9`           |
+| `submitit`        | `>=1.4.5`           |
+| `xformers`        | `==0.0.18`          |
+| `cuml-cu11`       | `>=23.04`           |
 
 
 To set up the required dependencies, please follow one of the options below:
