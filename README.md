@@ -121,15 +121,15 @@ The project is implemented in Python using the PyTorch framework, which allows u
 
 | Library           | Version             |
 |-------------------|---------------------|
-| `torch`           | `==2.0.0`           |
-| `torchvision`     | `==0.15.0`          |
-| `omegaconf`       | `>=2.3.0`           |
-| `torchmetrics`    | `==0.10.3`          |
-| `fvcore`          | `>=0.1.6`           |
-| `iopath`          | `>=0.1.9`           |
-| `submitit`        | `>=1.4.5`           |
-| `xformers`        | `==0.0.18`          |
-| `cuml-cu11`       | `>=23.04`           |
+| `torch`           | `== 2.0.0`           |
+| `torchvision`     | `== 0.15.0`          |
+| `omegaconf`       | `>= 2.3.0`           |
+| `torchmetrics`    | `== 0.10.3`          |
+| `fvcore`          | `>= 0.1.6`           |
+| `iopath`          | `>= 0.1.9`           |
+| `submitit`        | `>= 1.4.5`           |
+| `xformers`        | `== 0.0.18`          |
+| `cuml-cu11`       | `>= 23.04`           |
 
 
 To set up the required dependencies, please follow one of the options below:
@@ -195,13 +195,9 @@ During the training process, every 5 epochs the model's state and statistics are
 
 [8] Chen, X., Zhang, H., & Li, Y. (2022). Exploring adversarial attacks and defenses in vision transformers trained with DINO. [arXiv:2206.06761](https://arxiv.org/abs/2206.06761)
 
-[9] Xie, L., & Wang, Z. (2023). DINOv2: Learning robust visual features without supervision. [arXiv:2304.07193](https://arxiv.org/abs/2304.07193)
+[9] Gil, J. (2020). PyTorch Grad-CAM. GitHub repository. [https://github.com/jacobgil/pytorch-grad-cam](https://github.com/jacobgil/pytorch-grad-cam)
 
-[10] Tajbakhsh, N., Shin, J., Gurudu, S. R., & Hurst, R. T. (2022). What makes transfer learning work for medical images: Feature reuse & other factors. [arXiv:2203.01825](https://arxiv.org/abs/2203.01825)
-
-[11] Gil, J. (2020). PyTorch Grad-CAM. GitHub repository. [https://github.com/jacobgil/pytorch-grad-cam](https://github.com/jacobgil/pytorch-grad-cam)
-
-[12] Hoki. (2020). Torchattack: PyTorch adversarial attack library. GitHub repository. [https://github.com/Harry24k/torchattacks](https://github.com/Harry24k/torchattacks)
+[10] Hoki. (2020). Torchattack: PyTorch adversarial attack library. GitHub repository. [https://github.com/Harry24k/torchattacks](https://github.com/Harry24k/torchattacks)
 
 ## License
 
